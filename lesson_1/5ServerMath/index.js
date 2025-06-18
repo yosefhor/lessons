@@ -4,16 +4,11 @@ const app = express();
 app.use(express.json())
 const port = 3000;
 
-const add = (a, b) => { return a + b }
-const minus = (a, b) => { return a - b }
-const multiply = (a, b) => { return a * b }
-const divide = (a, b) => { return a / b }
-
 const operations = {
-    'add': add,
-    'minus': minus,
-    'multiply': multiply,
-    'divide': divide,
+    'add': (a, b) => { return a + b },
+    'minus': (a, b) => { return a - b },
+    'multiply': (a, b) => { return a * b },
+    'divide': (a, b) => { return a / b }
 }
 
 app.get('/calculate', (req, res, next) => {
