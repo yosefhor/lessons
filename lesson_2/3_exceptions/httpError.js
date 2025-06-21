@@ -1,5 +1,5 @@
 import express from 'express';
-import logger from './logger';
+import logger from './logger.js';
 
 const app = express();
 app.use(express.json())
@@ -15,9 +15,11 @@ app.get('/', (req, res, next) => {
 })
 
 app.use((err, req, res, next) => {
+    logger.error(`${err.message} | URL: ${req.url} | Method: ${req.method}`)
     res.status(400).send(err.message)
 })
 
 app.listen(port, () => {
-    console.log(`app is running on port ${port}`);
+    logger.info(`app is running on port ${port}`);
+    logger.silly('hahaha')
 })
