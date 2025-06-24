@@ -2,8 +2,8 @@ const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 
 const TARGET_BUCKET = "test1for";
-const TARGET_FOLDER = "input_with_trigger/"; // סיום ב־/ כי זה תיקייה
-const TEMP_FOLDER = "for_temp_files/"; // גם פה
+const TARGET_FOLDER = "input_with_trigger/";
+const TEMP_FOLDER = "for_temp_files/"; 
 
 exports.handler = async (event) => {
     const record = event.Records[0];

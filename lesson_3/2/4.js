@@ -21,11 +21,11 @@ const uploadJSON = async (bucketName, fileName, content) => {
 
     try {
         const response = await s3Client.send(command);
-        console.log(`uploaded: ${response}`);
+        console.log(`uploaded:`, response);
     } catch (err) {
         console.error(err);
 
     }
 }
 
-uploadJSON('test1for', 'example.json', { name: `Jack`, age: 40 })
+uploadJSON('test1for', 'input_with_trigger/example.json', { name: `Jack`, age: 40 })
