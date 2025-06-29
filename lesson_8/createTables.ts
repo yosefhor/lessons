@@ -1,5 +1,6 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import { CreateTableCommand, CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
-import { client } from "./dynamoClient";
+import { client } from "./lib/dynamoClient.ts";
 
 async function createTable(params: CreateTableCommandInput) {
   try {
