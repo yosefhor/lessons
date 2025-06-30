@@ -1,0 +1,50 @@
+service: project-orchestration
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-central-1
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+
+functions:
+  createProject:
+    handler: dist/functions/createProject.handler
+    events:
+      - http:
+          path: project
+          method: post
+
+  createSequence:
+    handler: dist/functions/createSequence.handler
+    events:
+      - http:
+          path: sequence
+          method: post
+
+  createActivity:
+    handler: dist/functions/createActivity.handler
+    events:
+      - http:
+          path: activity
+          method: post
+
+  runScheduler:
+    handler: dist/functions/scheduler.handler
+    events:
+      - schedule: rate(5 minutes) # מופעל אוטומטית כל 5 דקות
+
+plugins:
+  - serverless-esbuild
+
+data:
+  tables:
+    - Projects
+    - TaskSequences
+    - Activities
+    - ExecutionLog
+
+package:
+  individually: true
