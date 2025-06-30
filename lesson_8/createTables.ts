@@ -97,7 +97,7 @@ async function main() {
     ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
   });
 
-  console.log("🚀 כל הטבלאות נוצרו!");
+  console.log("🚀 All tables created!");
 }
 
 main().catch(console.error);
