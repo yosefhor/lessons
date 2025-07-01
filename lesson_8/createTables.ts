@@ -16,25 +16,28 @@ async function createTable(params: CreateTableCommandInput) {
 }
 
 async function main() {
-  // Projects table
+  // Projects
   await createTable({
     TableName: "Projects",
     KeySchema: [{ AttributeName: "ProjectID", KeyType: "HASH" }],
     AttributeDefinitions: [
       { AttributeName: "ProjectID", AttributeType: "S" },
       { AttributeName: "Owner", AttributeType: "S" },
-      { AttributeName: "CreatedAt", AttributeType: "S" },
+      { AttributeName: "Status", AttributeType: "S" },
     ],
     GlobalSecondaryIndexes: [
       {
-        IndexName: "OwnerCreatedIndex",
-        KeySchema: [
-          { AttributeName: "Owner", KeyType: "HASH" },
-          { AttributeName: "CreatedAt", KeyType: "RANGE" },
-        ],
+        IndexName: "ByStatus",
+        KeySchema: [{ AttributeName: "Status", KeyType: "HASH" }],
         Projection: { ProjectionType: "ALL" },
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
       },
+      {
+        IndexName: "ByOwner",
+        KeySchema: [{ AttributeName: "Owner", KeyType: "HASH" }],
+        Projection: { ProjectionType: "ALL" },
+        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+      }
     ],
     ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
   });
@@ -46,18 +49,24 @@ async function main() {
     AttributeDefinitions: [
       { AttributeName: "SequenceID", AttributeType: "S" },
       { AttributeName: "ProjectID", AttributeType: "S" },
+      { AttributeName: "Status", AttributeType: "S" },
     ],
     GlobalSecondaryIndexes: [
       {
-        IndexName: "ByProjectID",
-        KeySchema: [{ AttributeName: "ProjectID", KeyType: "HASH" }],
+        IndexName: "ByStatus",
+        KeySchema: [{ AttributeName: "Status", KeyType: "HASH" }],
         Projection: { ProjectionType: "ALL" },
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
       },
+      {
+        IndexName: "ByProject",
+        KeySchema: [{ AttributeName: "ProjectID", KeyType: "HASH" }],
+        Projection: { ProjectionType: "ALL" },
+        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+      }
     ],
     ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
   });
-
 
   // Activities
   await createTable({
@@ -66,30 +75,37 @@ async function main() {
     AttributeDefinitions: [
       { AttributeName: "ActivityID", AttributeType: "S" },
       { AttributeName: "SequenceID", AttributeType: "S" },
+      { AttributeName: "Status", AttributeType: "S" },
     ],
     GlobalSecondaryIndexes: [
+      {
+        IndexName: "ByStatus",
+        KeySchema: [{ AttributeName: "Status", KeyType: "HASH" }],
+        Projection: { ProjectionType: "ALL" },
+        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+      },
       {
         IndexName: "BySequence",
         KeySchema: [{ AttributeName: "SequenceID", KeyType: "HASH" }],
         Projection: { ProjectionType: "ALL" },
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
-      },
+      }
     ],
     ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
   });
 
-  // ExecutionLog
+  // Logs
   await createTable({
-    TableName: "ExecutionLog",
+    TableName: "Logs",
     KeySchema: [{ AttributeName: "LogID", KeyType: "HASH" }],
     AttributeDefinitions: [
       { AttributeName: "LogID", AttributeType: "S" },
-      { AttributeName: "EntityID", AttributeType: "S" },
+      { AttributeName: "ProjectID", AttributeType: "S" },
     ],
     GlobalSecondaryIndexes: [
       {
-        IndexName: "ByEntity",
-        KeySchema: [{ AttributeName: "EntityID", KeyType: "HASH" }],
+        IndexName: "ByProject",
+        KeySchema: [{ AttributeName: "ProjectID", KeyType: "HASH" }],
         Projection: { ProjectionType: "ALL" },
         ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
       },
