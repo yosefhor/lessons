@@ -4,11 +4,11 @@ import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 async function createTable() {
     try {
-        const tableName: string = "UsersWithGSI";
+        const tableName: string = "users_LSI";
         // const indexName: string = "";
         const result: any[] = [];
         const start: number = performance.now();
-        for (let i = 1; i < 100; i++) {
+        for (let i = 1; i < 1000; i++) {
             const response: any = await client.send(new QueryCommand({
                 TableName: tableName,
                 // IndexName: indexName,
