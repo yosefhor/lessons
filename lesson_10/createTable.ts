@@ -15,7 +15,7 @@ async function createTable(params: CreateTableCommandInput) {
   }
 }
 
-const users_Params: CreateTableCommandInput = {
+const usersParams: CreateTableCommandInput = {
   TableName: 'Users',
   KeySchema: [
     { AttributeName: "userID", KeyType: "HASH" },
@@ -89,4 +89,4 @@ const users_GSI_Params: CreateTableCommandInput = {
   BillingMode: "PAY_PER_REQUEST",
 }
 
-createTable(users_Params);
+createTable(users_GSI_Params);
