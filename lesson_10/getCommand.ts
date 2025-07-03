@@ -8,7 +8,7 @@ async function createTable() {
             TableName: "Users",
             Key: {
                 userID: "U001",
-                RegistrationDate: "2025-07-01T19:17:32.599Z",
+                // RegistrationDate: "2025-07-01T19:17:32.599Z",
             }
         }));
         console.log(`✅ found: ${response.Item}`);
