@@ -30,4 +30,4 @@ const tableUsers = 'Users';
 const tableUsersLSI = 'users_LSI';
 const tableUsersGSI = 'users_GSI';
 
-createTable(tableUsersGSI);
+createTable(tableUsers);
