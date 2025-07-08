@@ -1,7 +1,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";//Dev only, do not use in production!!!
 
 import { CreateTableCommand, CreateTableCommandInput, ProjectionType } from "@aws-sdk/client-dynamodb";
-import { client } from "./lib/dynamoClient.ts";
+import { client } from "./lib/dynamoClient";
 
 async function createTable(params: CreateTableCommandInput) {
   try {
@@ -16,29 +16,29 @@ async function createTable(params: CreateTableCommandInput) {
   }
 }
 
-const PatientsQueue: CreateTableCommandInput = {
-  TableName: 'PatientsQueue',
+const PatientsTable: CreateTableCommandInput = {
+  TableName: "Patients",
   KeySchema: [
-    { AttributeName: "PatientId", KeyType: "HASH" },
+    { AttributeName: "PatientId", KeyType: "HASH" }
   ],
   AttributeDefinitions: [
-    { AttributeName: "PatientId", AttributeType: "S" },
-    { AttributeName: "CurrentQueue", AttributeType: "S" },
-    { AttributeName: "PriorityAndTime", AttributeType: "S" },
+    { AttributeName: "PatientId", AttributeType: "S" }
   ],
-  GlobalSecondaryIndexes: [
-    {
-      IndexName: "QueuePriority_Index",
-      KeySchema: [
-        { AttributeName: "CurrentQueue", KeyType: "HASH" },
-        { AttributeName: "PriorityAndTime", KeyType: "RANGE" }
-      ],
-      Projection: {
-        ProjectionType: ProjectionType.KEYS_ONLY,
-      }
-    },
-  ],
-  BillingMode: "PAY_PER_REQUEST",
-}
+  BillingMode: "PAY_PER_REQUEST"
+};
 
-createTable(PatientsQueue);
+const QueuesTable: CreateTableCommandInput = {
+  TableName: "Queues",
+  KeySchema: [
+    { AttributeName: "QueueName", KeyType: "HASH" },
+    { AttributeName: "PriorityAndTime", KeyType: "RANGE" }
+  ],
+  AttributeDefinitions: [
+    { AttributeName: "QueueName", AttributeType: "S" },
+    { AttributeName: "PriorityAndTime", AttributeType: "S" }
+  ],
+  BillingMode: "PAY_PER_REQUEST"
+};
+
+createTable(PatientsTable);
+createTable(QueuesTable);
