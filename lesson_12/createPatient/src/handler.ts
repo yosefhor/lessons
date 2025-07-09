@@ -1,12 +1,26 @@
 import { injectRandomPatient } from "./injector";
-import { insertPatient } from "./db";
+import { insertPatient } from "./insertPatient";
 
-export async function handler(event: any) {
+export async function handler(event: any): Promise<any> {
   const patient = injectRandomPatient();
-  await insertPatient(patient);
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Patient injected", patientId: patient.PatientId }),
-  };
+  try {
+    await insertPatient(patient);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "✅ פציינט הוזן בהצלחה",
+        patientId: patient.PatientId
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: "❌ שגיאה בהכנסת הפציינט",
+        error: error.message
+      })
+    };
+  }
 }

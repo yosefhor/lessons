@@ -8,10 +8,8 @@ export interface Patient {
   CurrentQueues: QueueName[];
   CurrentTreatments: QueueName[];
   NextQueues: QueueName[][];
-  Status: Status;
 
   WaitStartTimes: { [key: string]: number };      // timestamp כניסה לתור המתנה
-  WaitDurations: { [key: string]: number };       // כמה זמן לחכות בתור (ms)
   TreatmentStartTimes: { [key: string]: number }; // timestamp תחילת טיפול
   TreatmentDurations: { [key: string]: number };  // כמה זמן טיפול לוקח (ms)
 
