@@ -1,5 +1,5 @@
-import { MedicalScenarios } from "./queues.js";
-import { generatePatientId, randomMinutesToMs, now } from "./utils.js";
+import { MedicalScenarios } from "./queues";
+import { generatePatientId, randomMinutesToMs, now } from "./utils";
 export function injectRandomPatient() {
     const scenarios = Object.keys(MedicalScenarios);
     const scenarioName = scenarios[Math.floor(Math.random() * scenarios.length)];
@@ -7,13 +7,11 @@ export function injectRandomPatient() {
     const firstStep = route[0];
     const patient = {
         PatientId: generatePatientId(),
-        Priority: Math.floor(Math.random() * 10) + 1,
+        Priority: Math.ceil(Math.random() * 10),
         CurrentQueues: [...firstStep],
         CurrentTreatments: [],
         NextQueues: route.slice(1),
-        Status: "waiting",
         WaitStartTimes: {},
-        WaitDurations: {},
         TreatmentStartTimes: {},
         TreatmentDurations: {},
         Name: `חולה ${Math.floor(Math.random() * 1000)}`,
@@ -23,7 +21,6 @@ export function injectRandomPatient() {
     // מגדיר זמנים אקראיים לכל תור בשלב הראשון
     for (const queue of patient.CurrentQueues) {
         patient.WaitStartTimes[queue] = currentTime;
-        patient.WaitDurations[queue] = randomMinutesToMs(1, 5);
         patient.TreatmentStartTimes[queue] = 0;
         patient.TreatmentDurations[queue] = randomMinutesToMs(2, 5);
     }

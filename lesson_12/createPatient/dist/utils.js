@@ -11,3 +11,12 @@ export function randomMinutesToMs(min, max) {
 export function now() {
     return Date.now();
 }
+/**
+ * מחזיר מחרוזת לצורך מיון לפי עדיפות גבוהה → נמוכה ואז לפי זמן מוקדם → מאוחר
+ * משתמש בפורמט: "00#1699999999999" כשה-00 מייצג את 10 - priority
+ */
+export function formatPriorityAndTime(priority, time) {
+    const reversedPriority = (10 - priority).toString().padStart(2, "0"); // 00=הכי דחוף
+    const paddedTime = time.toString().padStart(13, "0"); // למיון לפי זמן
+    return `${reversedPriority}#${paddedTime}`;
+}

@@ -6,12 +6,12 @@ export interface Patient {
   PatientId: string;
   Priority: number;
   CurrentQueues: QueueName[];
-  CurrentTreatments: QueueName[];
+  CurrentTreatments: QueueName | null;
   NextQueues: QueueName[][];
 
   WaitStartTimes: { [key: string]: number };      // timestamp כניסה לתור המתנה
-  TreatmentStartTimes: { [key: string]: number }; // timestamp תחילת טיפול
-  TreatmentDurations: { [key: string]: number };  // כמה זמן טיפול לוקח (ms)
+  TreatmentStartTime: { [key: string]: number }; // timestamp תחילת טיפול
+  TreatmentDuration: { [key: string]: number };  // כמה זמן טיפול לוקח (ms)
 
   Name?: string;
   Phone?: string;

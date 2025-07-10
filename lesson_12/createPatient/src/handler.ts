@@ -14,7 +14,7 @@ export async function handler(event: any): Promise<any> {
         patientId: patient.PatientId
       })
     };
-  } catch (error) {
+  } catch (error:any) {
     return {
       statusCode: 500,
       body: JSON.stringify({

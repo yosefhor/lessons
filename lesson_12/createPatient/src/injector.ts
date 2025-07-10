@@ -13,12 +13,12 @@ export function injectRandomPatient(): Patient {
     PatientId: generatePatientId(),
     Priority: Math.ceil(Math.random() * 10),
     CurrentQueues: [...firstStep],
-    CurrentTreatments: [],
+    CurrentTreatments: null,
     NextQueues: route.slice(1),
 
     WaitStartTimes: {},
-    TreatmentStartTimes: {},
-    TreatmentDurations: {},
+    TreatmentStartTime: {},
+    TreatmentDuration: {},
 
     Name: `חולה ${Math.floor(Math.random() * 1000)}`,
     Phone: `050-${Math.floor(Math.random() * 10000000)}`,
@@ -29,8 +29,8 @@ export function injectRandomPatient(): Patient {
   // מגדיר זמנים אקראיים לכל תור בשלב הראשון
   for (const queue of patient.CurrentQueues) {
     patient.WaitStartTimes[queue] = currentTime;
-    patient.TreatmentStartTimes[queue] = 0;
-    patient.TreatmentDurations[queue] = randomMinutesToMs(2, 5);
+    patient.TreatmentStartTime[queue] = 0;
+    patient.TreatmentDuration[queue] = randomMinutesToMs(2, 5);
   }
 
   return patient;
