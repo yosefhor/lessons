@@ -5,10 +5,12 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "tsx src/index.ts",
+    "start": "tsx index.ts",
     "create-table": "tsx createTable.ts",
-    "dev": "nodemon --watch src --exec tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon --watch --exec tsx index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-createPatient": "esbuild lambdas/createPatient/index.ts --bundle --platform=node --target=node20 --outfile=dist/createPatient.js",
+    "build-advancePatients": "esbuild lambdas/advancePatients/index.ts --bundle --platform=node --target=node20 --outfile=dist/advancePatients.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +20,7 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.7",
     "dotenv": "^17.0.0",
+    "esbuild": "^0.25.6",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
@@ -26,7 +29,6 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.839.0",
     "@aws-sdk/lib-dynamodb": "^3.839.0",
-    "esbuild": "^0.25.5",
     "express": "^5.1.0",
     "serverless-esbuild": "^1.55.1"
   }
