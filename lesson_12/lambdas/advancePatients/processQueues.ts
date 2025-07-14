@@ -1,8 +1,7 @@
 import { ddbDocClient } from "../../shared/dynamoClient";
-import { GetCommand, QueryCommand, TransactWriteCommand, } from "@aws-sdk/lib-dynamodb";
-import { Patient } from "../../shared/types";
+import { QueryCommand, TransactWriteCommand, } from "@aws-sdk/lib-dynamodb";
 import { QueueName, QueueNamesList } from "../../shared/queues";
-import { formatPriorityAndTime, randomTreatmentDuration, now } from "../../shared/utils";
+import { formatPriorityAndTime, randomTreatmentDuration, now, getPatient, createQueueInsertItem } from "../../shared/utils";
 
 // פונקציה שמריצה מעבר על כל התורים
 export async function processQueues() {
@@ -98,16 +97,7 @@ export async function processQueues() {
 
             for (const q of newStepQueues) {
                 const priorityKey = formatPriorityAndTime(patient.Priority, now());
-                transactItems.push({
-                    Put: {
-                        TableName: "Queues",
-                        Item: {
-                            QueueName: q,
-                            PriorityAndTime: priorityKey,
-                            PatientId: patient.PatientId,
-                        },
-                    },
-                });
+                transactItems.push(createQueueInsertItem(q, patient.PatientId, patient.Priority));
             }
 
             await ddbDocClient.send(new TransactWriteCommand({
@@ -117,15 +107,4 @@ export async function processQueues() {
             break; // קידמנו מישהו → יוצאים מהלולאה
         }
     }
-}
-
-// פונקציה עזר לשליפת פציינט מהטבלה
-async function getPatient(PatientId: string): Promise<Patient | null> {
-    const res = await ddbDocClient.send(
-        new GetCommand({
-            TableName: "Patients",
-            Key: { PatientId },
-        })
-    );
-    return res.Item as Patient;
 }

@@ -3358,8 +3358,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               abortSignal.onabort = onAbort;
             }
           }
-          req.on("frameError", (type, code, id) => {
-            rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id} has failed with code ${code}.`));
+          req.on("frameError", (type, code, id2) => {
+            rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id2} has failed with code ${code}.`));
           });
           req.on("error", rejectWithDestroy);
           req.on("aborted", () => {
@@ -4111,15 +4111,15 @@ var init_TypeRegistry = __esm({
         registry.schemas.set(qualifiedName, schema);
       }
       getSchema(shapeId) {
-        const id = this.normalizeShapeId(shapeId);
-        if (!this.schemas.has(id)) {
-          throw new Error(`@smithy/core/schema - schema not found for ${id}`);
+        const id2 = this.normalizeShapeId(shapeId);
+        if (!this.schemas.has(id2)) {
+          throw new Error(`@smithy/core/schema - schema not found for ${id2}`);
         }
-        return this.schemas.get(id);
+        return this.schemas.get(id2);
       }
       getBaseException() {
-        for (const [id, schema] of this.schemas.entries()) {
-          if (id.startsWith("smithy.ts.sdk.synthetic.") && id.endsWith("ServiceException")) {
+        for (const [id2, schema] of this.schemas.entries()) {
+          if (id2.startsWith("smithy.ts.sdk.synthetic.") && id2.endsWith("ServiceException")) {
             return schema;
           }
         }
@@ -9319,8 +9319,8 @@ var require_dist_cjs26 = __commonJS({
     }, "emitWarningIfUnsupportedVersion");
     var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
       const checksumAlgorithms = [];
-      for (const id in import_types5.AlgorithmId) {
-        const algorithmId = import_types5.AlgorithmId[id];
+      for (const id2 in import_types5.AlgorithmId) {
+        const algorithmId = import_types5.AlgorithmId[id2];
         if (runtimeConfig[algorithmId] === void 0) {
           continue;
         }
@@ -14752,9 +14752,9 @@ var require_getSSOTokenFilepath = __commonJS({
     var crypto_1 = require("crypto");
     var path_1 = require("path");
     var getHomeDir_1 = require_getHomeDir();
-    var getSSOTokenFilepath2 = (id) => {
+    var getSSOTokenFilepath2 = (id2) => {
       const hasher = (0, crypto_1.createHash)("sha1");
-      const cacheName = hasher.update(id).digest("hex");
+      const cacheName = hasher.update(id2).digest("hex");
       return (0, path_1.join)((0, getHomeDir_1.getHomeDir)(), ".aws", "sso", "cache", `${cacheName}.json`);
     };
     exports2.getSSOTokenFilepath = getSSOTokenFilepath2;
@@ -14770,8 +14770,8 @@ var require_getSSOTokenFromFile = __commonJS({
     var fs_1 = require("fs");
     var getSSOTokenFilepath_1 = require_getSSOTokenFilepath();
     var { readFile } = fs_1.promises;
-    var getSSOTokenFromFile2 = async (id) => {
-      const ssoTokenFilepath = (0, getSSOTokenFilepath_1.getSSOTokenFilepath)(id);
+    var getSSOTokenFromFile2 = async (id2) => {
+      const ssoTokenFilepath = (0, getSSOTokenFilepath_1.getSSOTokenFilepath)(id2);
       const ssoTokenText = await readFile(ssoTokenFilepath, "utf8");
       return JSON.parse(ssoTokenText);
     };
@@ -19159,8 +19159,8 @@ var require_dist_cjs49 = __commonJS({
     var import_shared_ini_file_loader = require_dist_cjs35();
     var import_fs = require("fs");
     var { writeFile } = import_fs.promises;
-    var writeSSOTokenToFile = /* @__PURE__ */ __name((id, ssoToken) => {
-      const tokenFilepath = (0, import_shared_ini_file_loader.getSSOTokenFilepath)(id);
+    var writeSSOTokenToFile = /* @__PURE__ */ __name((id2, ssoToken) => {
+      const tokenFilepath = (0, import_shared_ini_file_loader.getSSOTokenFilepath)(id2);
       const tokenString = JSON.stringify(ssoToken, null, 2);
       return writeFile(tokenFilepath, tokenString);
     }, "writeSSOTokenToFile");
@@ -21878,7 +21878,7 @@ var require_dist_cjs56 = __commonJS({
       ProvisionedThroughputExceededException: () => ProvisionedThroughputExceededException,
       PutItemCommand: () => PutItemCommand,
       PutResourcePolicyCommand: () => PutResourcePolicyCommand,
-      QueryCommand: () => QueryCommand2,
+      QueryCommand: () => QueryCommand,
       ReplicaAlreadyExistsException: () => ReplicaAlreadyExistsException,
       ReplicaNotFoundException: () => ReplicaNotFoundException,
       ReplicaStatus: () => ReplicaStatus,
@@ -26488,7 +26488,7 @@ var require_dist_cjs56 = __commonJS({
         __name(this, "PutResourcePolicyCommand");
       }
     };
-    var QueryCommand2 = class extends import_smithy_client28.Command.classBuilder().ep({
+    var QueryCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
     }).m(function(Command, cs, config2, o3) {
@@ -26760,7 +26760,7 @@ var require_dist_cjs56 = __commonJS({
       ListTagsOfResourceCommand,
       PutItemCommand,
       PutResourcePolicyCommand,
-      QueryCommand: QueryCommand2,
+      QueryCommand,
       RestoreTableFromBackupCommand,
       RestoreTableToPointInTimeCommand,
       ScanCommand,
@@ -26793,7 +26793,7 @@ var require_dist_cjs56 = __commonJS({
     var import_core62 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var paginateListTables = (0, import_core62.createPaginator)(DynamoDBClient2, ListTablesCommand, "ExclusiveStartTableName", "LastEvaluatedTableName", "Limit");
     var import_core72 = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var paginateQuery = (0, import_core72.createPaginator)(DynamoDBClient2, QueryCommand2, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
+    var paginateQuery = (0, import_core72.createPaginator)(DynamoDBClient2, QueryCommand, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
     var import_core82 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var paginateScan = (0, import_core82.createPaginator)(DynamoDBClient2, ScanCommand, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
     var import_util_waiter = require_dist_cjs55();
@@ -27227,7 +27227,7 @@ var require_dist_cjs58 = __commonJS({
       NumberValue: () => import_util_dynamodb.NumberValueImpl,
       PaginationConfiguration: () => import_types5.PaginationConfiguration,
       PutCommand: () => PutCommand,
-      QueryCommand: () => QueryCommand2,
+      QueryCommand: () => QueryCommand,
       ScanCommand: () => ScanCommand,
       TransactGetCommand: () => TransactGetCommand,
       TransactWriteCommand: () => TransactWriteCommand2,
@@ -27694,7 +27694,7 @@ var require_dist_cjs58 = __commonJS({
         return async () => handler2(this.clientCommand);
       }
     };
-    var QueryCommand2 = class extends DynamoDBDocumentClientCommand {
+    var QueryCommand = class extends DynamoDBDocumentClientCommand {
       constructor(input) {
         super();
         this.input = input;
@@ -28068,7 +28068,7 @@ var require_dist_cjs58 = __commonJS({
         }
       }
       query(args, optionsOrCb, cb) {
-        const command = new QueryCommand2(args);
+        const command = new QueryCommand(args);
         if (typeof optionsOrCb === "function") {
           this.send(command, optionsOrCb);
         } else if (typeof cb === "function") {
@@ -28135,7 +28135,7 @@ var require_dist_cjs58 = __commonJS({
     };
     var import_types5 = require_dist_cjs();
     var import_core22 = (init_dist_es(), __toCommonJS(dist_es_exports));
-    var paginateQuery = (0, import_core22.createPaginator)(DynamoDBDocumentClient2, QueryCommand2, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
+    var paginateQuery = (0, import_core22.createPaginator)(DynamoDBDocumentClient2, QueryCommand, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
     var import_core32 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var paginateScan = (0, import_core32.createPaginator)(DynamoDBDocumentClient2, ScanCommand, "ExclusiveStartKey", "LastEvaluatedKey", "Limit");
   }
@@ -28503,29 +28503,12 @@ var require_main = __commonJS({
   }
 });
 
-// lambdas/advancePatients/index.ts
+// lambdas/createPatient/index.ts
 var index_exports = {};
 __export(index_exports, {
   handler: () => handler
 });
 module.exports = __toCommonJS(index_exports);
-
-// shared/dynamoClient.ts
-var import_client_dynamodb = __toESM(require_dist_cjs56(), 1);
-var import_lib_dynamodb = __toESM(require_dist_cjs58(), 1);
-var dotenv = __toESM(require_main(), 1);
-dotenv.config();
-var client = new import_client_dynamodb.DynamoDBClient({
-  region: "eu-central-1"
-  // credentials: {
-  //     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-  //     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
-  // }
-});
-var ddbDocClient = import_lib_dynamodb.DynamoDBDocumentClient.from(client);
-
-// lambdas/advancePatients/processQueues.ts
-var import_lib_dynamodb3 = __toESM(require_dist_cjs58(), 1);
 
 // shared/queues.ts
 var Queues = {
@@ -28631,10 +28614,25 @@ var MedicalScenarios = {
 
 // shared/utils.ts
 var import_lib_dynamodb2 = __toESM(require_dist_cjs58(), 1);
-function randomTreatmentDuration() {
-  const min = 2 * 60 * 1e3;
-  const max = 5 * 60 * 1e3;
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+
+// shared/dynamoClient.ts
+var import_client_dynamodb = __toESM(require_dist_cjs56(), 1);
+var import_lib_dynamodb = __toESM(require_dist_cjs58(), 1);
+var dotenv = __toESM(require_main(), 1);
+dotenv.config();
+var client = new import_client_dynamodb.DynamoDBClient({
+  region: "eu-central-1"
+  // credentials: {
+  //     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+  //     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+  // }
+});
+var ddbDocClient = import_lib_dynamodb.DynamoDBDocumentClient.from(client);
+
+// shared/utils.ts
+var id = 0;
+function generatePatientId() {
+  return `P-${id++}`;
 }
 function now() {
   return Date.now();
@@ -28643,15 +28641,6 @@ function formatPriorityAndTime(priority, time) {
   const reversedPriority = (10 - priority).toString().padStart(2, "0");
   const paddedTime = time.toString().padStart(13, "0");
   return `${reversedPriority}#${paddedTime}`;
-}
-async function getPatient(PatientId) {
-  const res = await ddbDocClient.send(
-    new import_lib_dynamodb2.GetCommand({
-      TableName: "Patients",
-      Key: { PatientId }
-    })
-  );
-  return res.Item;
 }
 function createQueueInsertItem(queue, patientId, priority) {
   return {
@@ -28666,95 +28655,66 @@ function createQueueInsertItem(queue, patientId, priority) {
   };
 }
 
-// lambdas/advancePatients/processQueues.ts
-async function processQueues() {
-  for (const queueName of QueueNamesList) {
-    const { Items: queueItems = [] } = await ddbDocClient.send(
-      new import_lib_dynamodb3.QueryCommand({
-        TableName: "Queues",
-        KeyConditionExpression: "QueueName = :queueName",
-        ExpressionAttributeValues: {
-          ":queueName": queueName
-        },
-        ScanIndexForward: true,
-        // ממי שצריך להיכנס ראשון
-        Limit: 10
-      })
-    );
-    if (queueItems.length === 0) continue;
-    let someoneInTreatment = false;
-    for (const item of queueItems) {
-      const patient = await getPatient(item.PatientId);
-      if (patient && patient.CurrentTreatment === queueName && patient.TreatmentStartTime && patient.TreatmentDuration && now() < patient.TreatmentStartTime + patient.TreatmentDuration) {
-        someoneInTreatment = true;
-        break;
-      }
-    }
-    if (someoneInTreatment) continue;
-    for (const item of queueItems) {
-      const patient = await getPatient(item.PatientId);
-      if (!patient || patient.CurrentTreatment !== null) continue;
-      const currentStep = patient.WaitingQueues[0];
-      const updatedStep = currentStep.filter((q3) => q3 !== queueName);
-      const newWaitingQueues = [...patient.WaitingQueues];
-      let newStepQueues = [];
-      if (updatedStep.length === 0) {
-        newWaitingQueues.shift();
-        if (newWaitingQueues.length > 0) {
-          newStepQueues = newWaitingQueues[0];
-        }
-      } else {
-        newWaitingQueues[0] = updatedStep;
-      }
-      const treatmentDuration = randomTreatmentDuration();
-      const transactItems = [
-        {
-          Update: {
-            TableName: "Patients",
-            Key: { PatientId: patient.PatientId },
-            UpdateExpression: `
-        SET TreatmentStartTime = :start,
-            TreatmentDuration = :duration,
-            CurrentTreatment = :queue,
-            WaitingQueues = :newWaitingQueues
-      `,
-            ExpressionAttributeValues: {
-              ":start": now(),
-              ":duration": treatmentDuration,
-              ":queue": queueName,
-              ":newWaitingQueues": newWaitingQueues
-            }
-          }
-        },
-        {
-          Delete: {
-            TableName: "Queues",
-            Key: {
-              QueueName: queueName,
-              PriorityAndTime: item.PriorityAndTime
-            }
-          }
-        }
-      ];
-      for (const q3 of newStepQueues) {
-        const priorityKey = formatPriorityAndTime(patient.Priority, now());
-        transactItems.push(createQueueInsertItem(q3, patient.PatientId, patient.Priority));
-      }
-      await ddbDocClient.send(new import_lib_dynamodb3.TransactWriteCommand({
-        TransactItems: transactItems
-      }));
-      break;
-    }
-  }
+// lambdas/createPatient/injector.ts
+function injectRandomPatient() {
+  const scenarios = Object.keys(MedicalScenarios);
+  const scenarioName = scenarios[Math.floor(Math.random() * scenarios.length)];
+  const route = MedicalScenarios[scenarioName];
+  const patient = {
+    PatientId: generatePatientId(),
+    Priority: Math.ceil(Math.random() * 10),
+    WaitingQueues: [...route],
+    CurrentTreatment: null,
+    WaitStartTimes: {},
+    TreatmentStartTime: null,
+    TreatmentDuration: null,
+    Name: `person ${Math.floor(Math.random() * 1e3)}`,
+    Phone: `050-${Math.floor(Math.random() * 1e7).toString().padStart(7, "0")}`
+  };
+  return patient;
 }
 
-// lambdas/advancePatients/index.ts
+// lambdas/createPatient/insertPatient.ts
+var import_lib_dynamodb3 = __toESM(require_dist_cjs58(), 1);
+async function insertPatient(patient) {
+  const transactItems = [];
+  transactItems.push({
+    Put: {
+      TableName: "Patients",
+      Item: patient
+    }
+  });
+  for (const queue of patient.WaitingQueues[0]) {
+    transactItems.push(createQueueInsertItem(queue, patient.PatientId, patient.Priority));
+  }
+  await ddbDocClient.send(
+    new import_lib_dynamodb3.TransactWriteCommand({
+      TransactItems: transactItems
+    })
+  );
+}
+
+// lambdas/createPatient/index.ts
 async function handler(event) {
-  await processQueues();
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Queues processed" })
-  };
+  const patient = injectRandomPatient();
+  try {
+    await insertPatient(patient);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        message: "\u2705 \u05E4\u05E6\u05D9\u05D9\u05E0\u05D8 \u05D4\u05D5\u05D6\u05DF \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4",
+        patientId: patient.PatientId
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        message: "\u274C \u05E9\u05D2\u05D9\u05D0\u05D4 \u05D1\u05D4\u05DB\u05E0\u05E1\u05EA \u05D4\u05E4\u05E6\u05D9\u05D9\u05E0\u05D8",
+        error: error.message
+      })
+    };
+  }
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -1,46 +1,25 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  TransactWriteCommand,
-} from "@aws-sdk/lib-dynamodb";
+import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { Patient } from "../../shared/types";
-import { now, formatPriorityAndTime } from "../../shared/utils";
-
-const client = new DynamoDBClient({ region: "eu-central-1" });
-const docClient = DynamoDBDocumentClient.from(client);
-
-const PATIENTS_TABLE = "Patients";
-const QUEUES_TABLE = "Queues";
+import { createQueueInsertItem } from "../../shared/utils";
+import { ddbDocClient } from "../../shared/dynamoClient";
 
 export async function insertPatient(patient: Patient): Promise<void> {
-  const transactItems = [];
+  const transactItems: any[] = [];
 
-  // הכנסת הפציינט לטבלה המרכזית
+  // הכנסת הפציינט לטבלת החולים
   transactItems.push({
     Put: {
-      TableName: PATIENTS_TABLE,
+      TableName: "Patients",
       Item: patient,
     },
   });
 
-  const currentTime = now();
-
-  for (const queue of patient.CurrentQueues) {
-    const priorityAndTime = formatPriorityAndTime(patient.Priority, currentTime);
-    transactItems.push({
-      Put: {
-        TableName: QUEUES_TABLE,
-        Item: {
-          QueueName: queue,
-          PriorityAndTime: priorityAndTime,
-          PatientId: patient.PatientId,
-        },
-      },
-    });
+  // הכנסת התורים בשלב הראשון (WaitingQueues)
+  for (const queue of patient.WaitingQueues[0]) {
+    transactItems.push(createQueueInsertItem(queue, patient.PatientId, patient.Priority));
   }
 
-  await docClient.send(
+  await ddbDocClient.send(
     new TransactWriteCommand({
       TransactItems: transactItems,
     })

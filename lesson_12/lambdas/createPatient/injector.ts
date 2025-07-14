@@ -1,6 +1,6 @@
 import { Patient } from "../../shared/types";
-import { Queues, MedicalScenarios } from "../../shared/queues";
-import { generatePatientId, randomTreatmentDuration, now } from "../../shared/utils";
+import { MedicalScenarios } from "../../shared/queues";
+import { generatePatientId } from "../../shared/utils";
 
 export function injectRandomPatient(): Patient {
   const scenarios = Object.keys(MedicalScenarios);
@@ -17,16 +17,9 @@ export function injectRandomPatient(): Patient {
     TreatmentStartTime: null,
     TreatmentDuration: null,
 
-    Name: `חולה ${Math.floor(Math.random() * 1000)}`,
-    Phone: `050-${Math.floor(Math.random() * 10000000)}`,
+    Name: `person ${Math.floor(Math.random() * 1000)}`,
+    Phone: `050-${(Math.floor(Math.random() * 10000000)).toString().padStart(7, '0')}`,
   };
-
-  // מגדיר זמנים אקראיים לכל תור בשלב הראשון
-  for (const queue of patient.CurrentQueues) {
-    patient.WaitStartTimes[queue] = now();
-    patient.TreatmentStartTime = 0;
-    patient.TreatmentDuration = randomTreatmentDuration(2, 5);
-  }
 
   return patient;
 }
