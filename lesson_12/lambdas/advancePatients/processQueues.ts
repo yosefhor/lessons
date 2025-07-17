@@ -44,7 +44,12 @@ export async function processQueues() {
         // מישהו זמין – נמצא את הראשון שזמין
         for (const item of queueItems) {
             const patient = await getPatient(item.PatientId);
-            if (!patient || patient.CurrentTreatment !== null) continue;
+            if (
+                !patient ||
+                patient.TreatmentStartTime &&
+                patient.TreatmentDuration &&
+                patient.TreatmentStartTime + patient.TreatmentDuration < now()
+            ) continue;
 
             const currentStep = patient.WaitingQueues[0];
             const updatedStep = currentStep.filter(q => q !== queueName);
