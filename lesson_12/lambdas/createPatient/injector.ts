@@ -11,12 +11,7 @@ export function injectRandomPatient(): Patient {
     PatientId: generatePatientId(),
     Priority: Math.ceil(Math.random() * 10),
     WaitingQueues: [...route],
-    CurrentTreatment: null,
-
-    WaitStartTimes: {},
-    TreatmentStartTime: null,
-    TreatmentDuration: null,
-
+    
     Name: `person ${Math.floor(Math.random() * 1000)}`,
     Phone: `050-${(Math.floor(Math.random() * 10000000)).toString().padStart(7, '0')}`,
   };

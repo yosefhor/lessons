@@ -6,11 +6,10 @@ export interface Patient {
   PatientId: string;
   Priority: number;
   WaitingQueues: QueueName[][];
-  CurrentTreatment?: QueueName | null;
-
-  WaitStartTimes: { [key: string]: number };      // timestamp כניסה לתור המתנה
-  TreatmentStartTime?: number | null; // timestamp תחילת טיפול
-  TreatmentDuration?: number | null;  // כמה זמן טיפול לוקח (ms)
+  CurrentTreatment?: QueueName;
+  TreatmentStartTime?: number;
+  TreatmentDuration?: number;
+  TreatmentEndTime?: number;
 
   Name?: string;
   Phone?: string;

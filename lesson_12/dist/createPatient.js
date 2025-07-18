@@ -124,8 +124,8 @@ var require_dist_cjs = __commonJS({
     var getDefaultClientConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
       return getChecksumConfiguration(runtimeConfig);
     }, "getDefaultClientConfiguration");
-    var resolveDefaultRuntimeConfig3 = /* @__PURE__ */ __name((config2) => {
-      return resolveChecksumRuntimeConfig(config2);
+    var resolveDefaultRuntimeConfig3 = /* @__PURE__ */ __name((config) => {
+      return resolveChecksumRuntimeConfig(config);
     }, "resolveDefaultRuntimeConfig");
     var FieldPosition = /* @__PURE__ */ ((FieldPosition2) => {
       FieldPosition2[FieldPosition2["HEADER"] = 0] = "HEADER";
@@ -1181,8 +1181,8 @@ var require_dist_cjs5 = __commonJS({
       default: void 0
     };
     var import_protocol_http15 = require_dist_cjs3();
-    var getCacheKey = /* @__PURE__ */ __name(async (commandName, config2, options) => {
-      const { accessKeyId } = await config2.credentials();
+    var getCacheKey = /* @__PURE__ */ __name(async (commandName, config, options) => {
+      const { accessKeyId } = await config.credentials();
       const { identifiers } = options;
       return JSON.stringify({
         ...accessKeyId && { accessKeyId },
@@ -1193,8 +1193,8 @@ var require_dist_cjs5 = __commonJS({
       });
     }, "getCacheKey");
     var requestQueue = {};
-    var updateDiscoveredEndpointInCache = /* @__PURE__ */ __name(async (config2, options) => new Promise((resolve, reject) => {
-      const { endpointCache } = config2;
+    var updateDiscoveredEndpointInCache = /* @__PURE__ */ __name(async (config, options) => new Promise((resolve, reject) => {
+      const { endpointCache } = config;
       const { cacheKey, commandName, identifiers } = options;
       const endpoints = endpointCache.get(cacheKey);
       if (endpoints && endpoints.length === 1 && endpoints[0].Address === "") {
@@ -1214,7 +1214,7 @@ var require_dist_cjs5 = __commonJS({
           // strip "Command"
           Identifiers: identifiers
         });
-        const handler2 = command.resolveMiddleware(options.clientStack, config2, options.options);
+        const handler2 = command.resolveMiddleware(options.clientStack, config, options.options);
         handler2(command).then((result) => {
           endpointCache.set(cacheKey, result.output.Endpoints);
           if (requestQueue[cacheKey]) {
@@ -1247,33 +1247,33 @@ var require_dist_cjs5 = __commonJS({
         });
       }
     }), "updateDiscoveredEndpointInCache");
-    var endpointDiscoveryMiddleware = /* @__PURE__ */ __name((config2, middlewareConfig) => (next, context) => async (args) => {
-      if (config2.isCustomEndpoint) {
-        if (config2.isClientEndpointDiscoveryEnabled) {
+    var endpointDiscoveryMiddleware = /* @__PURE__ */ __name((config, middlewareConfig) => (next, context) => async (args) => {
+      if (config.isCustomEndpoint) {
+        if (config.isClientEndpointDiscoveryEnabled) {
           throw new Error(`Custom endpoint is supplied; endpointDiscoveryEnabled must not be true.`);
         }
         return next(args);
       }
-      const { endpointDiscoveryCommandCtor } = config2;
+      const { endpointDiscoveryCommandCtor } = config;
       const { isDiscoveredEndpointRequired, identifiers } = middlewareConfig;
       const clientName = context.clientName;
       const commandName = context.commandName;
-      const isEndpointDiscoveryEnabled = await config2.endpointDiscoveryEnabled();
-      const cacheKey = await getCacheKey(commandName, config2, { identifiers });
+      const isEndpointDiscoveryEnabled = await config.endpointDiscoveryEnabled();
+      const cacheKey = await getCacheKey(commandName, config, { identifiers });
       if (isDiscoveredEndpointRequired) {
         if (isEndpointDiscoveryEnabled === false) {
           throw new Error(
             `Endpoint Discovery is disabled but ${commandName} on ${clientName} requires it. Please check your configurations.`
           );
         }
-        await updateDiscoveredEndpointInCache(config2, {
+        await updateDiscoveredEndpointInCache(config, {
           ...middlewareConfig,
           commandName,
           cacheKey,
           endpointDiscoveryCommandCtor
         });
       } else if (isEndpointDiscoveryEnabled) {
-        updateDiscoveredEndpointInCache(config2, {
+        updateDiscoveredEndpointInCache(config, {
           ...middlewareConfig,
           commandName,
           cacheKey,
@@ -1282,7 +1282,7 @@ var require_dist_cjs5 = __commonJS({
       }
       const { request } = args;
       if (cacheKey && import_protocol_http15.HttpRequest.isInstance(request)) {
-        const endpoint = config2.endpointCache.getEndpoint(cacheKey);
+        const endpoint = config.endpointCache.getEndpoint(cacheKey);
         if (endpoint) {
           request.hostname = endpoint;
         }
@@ -1584,11 +1584,11 @@ var init_httpAuthSchemeMiddleware = __esm({
     import_types2 = __toESM(require_dist_cjs());
     import_util_middleware2 = __toESM(require_dist_cjs2());
     init_resolveAuthOptions();
-    httpAuthSchemeMiddleware = (config2, mwOptions) => (next, context) => async (args) => {
-      const options = config2.httpAuthSchemeProvider(await mwOptions.httpAuthSchemeParametersProvider(config2, context, args.input));
-      const authSchemePreference = config2.authSchemePreference ? await config2.authSchemePreference() : [];
+    httpAuthSchemeMiddleware = (config, mwOptions) => (next, context) => async (args) => {
+      const options = config.httpAuthSchemeProvider(await mwOptions.httpAuthSchemeParametersProvider(config, context, args.input));
+      const authSchemePreference = config.authSchemePreference ? await config.authSchemePreference() : [];
       const resolvedOptions = resolveAuthOptions(options, authSchemePreference);
-      const authSchemes = convertHttpAuthSchemesToMap(config2.httpAuthSchemes);
+      const authSchemes = convertHttpAuthSchemesToMap(config.httpAuthSchemes);
       const smithyContext = (0, import_util_middleware2.getSmithyContext)(context);
       const failureReasons = [];
       for (const option of resolvedOptions) {
@@ -1597,12 +1597,12 @@ var init_httpAuthSchemeMiddleware = __esm({
           failureReasons.push(`HttpAuthScheme \`${option.schemeId}\` was not enabled for this service.`);
           continue;
         }
-        const identityProvider = scheme.identityProvider(await mwOptions.identityProviderConfigProvider(config2));
+        const identityProvider = scheme.identityProvider(await mwOptions.identityProviderConfigProvider(config));
         if (!identityProvider) {
           failureReasons.push(`HttpAuthScheme \`${option.schemeId}\` did not have an IdentityProvider configured.`);
           continue;
         }
-        const { identityProperties = {}, signingProperties = {} } = option.propertiesExtractor?.(config2, context) || {};
+        const { identityProperties = {}, signingProperties = {} } = option.propertiesExtractor?.(config, context) || {};
         option.identityProperties = Object.assign(option.identityProperties || {}, identityProperties);
         option.signingProperties = Object.assign(option.signingProperties || {}, signingProperties);
         smithyContext.selectedHttpAuthScheme = {
@@ -1633,9 +1633,9 @@ var init_getHttpAuthSchemeEndpointRuleSetPlugin = __esm({
       relation: "before",
       toMiddleware: "endpointV2Middleware"
     };
-    getHttpAuthSchemeEndpointRuleSetPlugin = (config2, { httpAuthSchemeParametersProvider, identityProviderConfigProvider }) => ({
+    getHttpAuthSchemeEndpointRuleSetPlugin = (config, { httpAuthSchemeParametersProvider, identityProviderConfigProvider }) => ({
       applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(httpAuthSchemeMiddleware(config2, {
+        clientStack.addRelativeTo(httpAuthSchemeMiddleware(config, {
           httpAuthSchemeParametersProvider,
           identityProviderConfigProvider
         }), httpAuthSchemeEndpointRuleSetMiddlewareOptions);
@@ -1749,11 +1749,11 @@ var require_dist_cjs9 = __commonJS({
       tags: ["SERIALIZER"],
       override: true
     };
-    function getSerdePlugin4(config2, serializer, deserializer) {
+    function getSerdePlugin4(config, serializer, deserializer) {
       return {
         applyToStack: (commandStack) => {
-          commandStack.add(deserializerMiddleware(config2, deserializer), deserializerMiddlewareOption);
-          commandStack.add(serializerMiddleware(config2, serializer), serializerMiddlewareOption2);
+          commandStack.add(deserializerMiddleware(config, deserializer), deserializerMiddlewareOption);
+          commandStack.add(serializerMiddleware(config, serializer), serializerMiddlewareOption2);
         }
       };
     }
@@ -1775,9 +1775,9 @@ var init_getHttpAuthSchemePlugin = __esm({
       relation: "before",
       toMiddleware: import_middleware_serde.serializerMiddlewareOption.name
     };
-    getHttpAuthSchemePlugin = (config2, { httpAuthSchemeParametersProvider, identityProviderConfigProvider }) => ({
+    getHttpAuthSchemePlugin = (config, { httpAuthSchemeParametersProvider, identityProviderConfigProvider }) => ({
       applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(httpAuthSchemeMiddleware(config2, {
+        clientStack.addRelativeTo(httpAuthSchemeMiddleware(config, {
           httpAuthSchemeParametersProvider,
           identityProviderConfigProvider
         }), httpAuthSchemeMiddlewareOptions);
@@ -1807,7 +1807,7 @@ var init_httpSigningMiddleware = __esm({
     };
     defaultSuccessHandler = (httpResponse, signingProperties) => {
     };
-    httpSigningMiddleware = (config2) => (next, context) => async (args) => {
+    httpSigningMiddleware = (config) => (next, context) => async (args) => {
       if (!import_protocol_http.HttpRequest.isInstance(args.request)) {
         return next(args);
       }
@@ -1841,9 +1841,9 @@ var init_getHttpSigningMiddleware = __esm({
       relation: "after",
       toMiddleware: "retryMiddleware"
     };
-    getHttpSigningPlugin = (config2) => ({
+    getHttpSigningPlugin = (config) => ({
       applyToStack: (clientStack) => {
-        clientStack.addRelativeTo(httpSigningMiddleware(config2), httpSigningMiddlewareOptions);
+        clientStack.addRelativeTo(httpSigningMiddleware(config), httpSigningMiddlewareOptions);
       }
     });
   }
@@ -1872,25 +1872,25 @@ var init_normalizeProvider = __esm({
 
 // node_modules/@smithy/core/dist-es/pagination/createPaginator.js
 function createPaginator(ClientCtor, CommandCtor, inputTokenName, outputTokenName, pageSizeTokenName) {
-  return async function* paginateOperation(config2, input, ...additionalArguments) {
+  return async function* paginateOperation(config, input, ...additionalArguments) {
     const _input = input;
-    let token = config2.startingToken ?? _input[inputTokenName];
+    let token = config.startingToken ?? _input[inputTokenName];
     let hasNext = true;
     let page;
     while (hasNext) {
       _input[inputTokenName] = token;
       if (pageSizeTokenName) {
-        _input[pageSizeTokenName] = _input[pageSizeTokenName] ?? config2.pageSize;
+        _input[pageSizeTokenName] = _input[pageSizeTokenName] ?? config.pageSize;
       }
-      if (config2.client instanceof ClientCtor) {
-        page = await makePagedClientRequest(CommandCtor, config2.client, input, config2.withCommand, ...additionalArguments);
+      if (config.client instanceof ClientCtor) {
+        page = await makePagedClientRequest(CommandCtor, config.client, input, config.withCommand, ...additionalArguments);
       } else {
         throw new Error(`Invalid client, expected instance of ${ClientCtor.name}`);
       }
       yield page;
       const prevToken = token;
       token = get(page, outputTokenName);
-      hasNext = !!(token && (!config2.stopOnSameToken || token !== prevToken));
+      hasNext = !!(token && (!config.stopOnSameToken || token !== prevToken));
     }
     return void 0;
   };
@@ -3092,9 +3092,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       updateHttpClientConfig(key, value) {
         this.config = void 0;
-        this.configProvider = this.configProvider.then((config2) => {
+        this.configProvider = this.configProvider.then((config) => {
           return {
-            ...config2,
+            ...config,
             [key]: value
           };
         });
@@ -3141,9 +3141,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
     };
     var NodeHttp2ConnectionManager = class {
-      constructor(config2) {
+      constructor(config) {
         this.sessionCache = /* @__PURE__ */ new Map();
-        this.config = config2;
+        this.config = config;
         if (this.config.maxConcurrency && this.config.maxConcurrency <= 0) {
           throw new RangeError("maxConcurrency must be greater than zero.");
         }
@@ -3358,8 +3358,8 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
               abortSignal.onabort = onAbort;
             }
           }
-          req.on("frameError", (type, code, id2) => {
-            rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id2} has failed with code ${code}.`));
+          req.on("frameError", (type, code, id) => {
+            rejectWithDestroy(new Error(`Frame type id ${type} in stream id ${id} has failed with code ${code}.`));
           });
           req.on("error", rejectWithDestroy);
           req.on("aborted", () => {
@@ -3381,9 +3381,9 @@ or increase socketAcquisitionWarningTimeout=(millis) in the NodeHttpHandler conf
       }
       updateHttpClientConfig(key, value) {
         this.config = void 0;
-        this.configProvider = this.configProvider.then((config2) => {
+        this.configProvider = this.configProvider.then((config) => {
           return {
-            ...config2,
+            ...config,
             [key]: value
           };
         });
@@ -3640,9 +3640,9 @@ var require_dist_cjs17 = __commonJS({
       }
       updateHttpClientConfig(key, value) {
         this.config = void 0;
-        this.configProvider = this.configProvider.then((config2) => {
-          config2[key] = value;
-          return config2;
+        this.configProvider = this.configProvider.then((config) => {
+          config[key] = value;
+          return config;
         });
       }
       httpHandlerConfigs() {
@@ -4111,15 +4111,15 @@ var init_TypeRegistry = __esm({
         registry.schemas.set(qualifiedName, schema);
       }
       getSchema(shapeId) {
-        const id2 = this.normalizeShapeId(shapeId);
-        if (!this.schemas.has(id2)) {
-          throw new Error(`@smithy/core/schema - schema not found for ${id2}`);
+        const id = this.normalizeShapeId(shapeId);
+        if (!this.schemas.has(id)) {
+          throw new Error(`@smithy/core/schema - schema not found for ${id}`);
         }
-        return this.schemas.get(id2);
+        return this.schemas.get(id);
       }
       getBaseException() {
-        for (const [id2, schema] of this.schemas.entries()) {
-          if (id2.startsWith("smithy.ts.sdk.synthetic.") && id2.endsWith("ServiceException")) {
+        for (const [id, schema] of this.schemas.entries()) {
+          if (id.startsWith("smithy.ts.sdk.synthetic.") && id.endsWith("ServiceException")) {
             return schema;
           }
         }
@@ -6119,9 +6119,9 @@ var DefaultIdentityProviderConfig;
 var init_DefaultIdentityProviderConfig = __esm({
   "node_modules/@smithy/core/dist-es/util-identity-and-auth/DefaultIdentityProviderConfig.js"() {
     DefaultIdentityProviderConfig = class {
-      constructor(config2) {
+      constructor(config) {
         this.authSchemes = /* @__PURE__ */ new Map();
-        for (const [key, value] of Object.entries(config2)) {
+        for (const [key, value] of Object.entries(config)) {
           if (value !== void 0) {
             this.authSchemes.set(key, value);
           }
@@ -7199,8 +7199,8 @@ var init_emitWarningIfUnsupportedVersion = __esm({
     state = {
       warningEmitted: false
     };
-    emitWarningIfUnsupportedVersion = (version2) => {
-      if (version2 && !state.warningEmitted && parseInt(version2.substring(1, version2.indexOf("."))) < 18) {
+    emitWarningIfUnsupportedVersion = (version3) => {
+      if (version3 && !state.warningEmitted && parseInt(version3.substring(1, version3.indexOf("."))) < 18) {
         state.warningEmitted = true;
         process.emitWarning(`NodeDeprecationWarning: The AWS SDK for JavaScript (v3) will
 no longer support Node.js 16.x on January 6, 2025.
@@ -7338,15 +7338,15 @@ var init_AwsSdkSigV4Signer = __esm({
     };
     validateSigningProperties = async (signingProperties) => {
       const context = throwSigningPropertyError("context", signingProperties.context);
-      const config2 = throwSigningPropertyError("config", signingProperties.config);
+      const config = throwSigningPropertyError("config", signingProperties.config);
       const authScheme = context.endpointV2?.properties?.authSchemes?.[0];
-      const signerFunction = throwSigningPropertyError("signer", config2.signer);
+      const signerFunction = throwSigningPropertyError("signer", config.signer);
       const signer = await signerFunction(authScheme);
       const signingRegion = signingProperties?.signingRegion;
       const signingRegionSet = signingProperties?.signingRegionSet;
       const signingName = signingProperties?.signingName;
       return {
-        config: config2,
+        config,
         signer,
         signingRegion,
         signingRegionSet,
@@ -7359,7 +7359,7 @@ var init_AwsSdkSigV4Signer = __esm({
           throw new Error("The request is not an instance of `HttpRequest` and cannot be signed");
         }
         const validatedProps = await validateSigningProperties(signingProperties);
-        const { config: config2, signer } = validatedProps;
+        const { config, signer } = validatedProps;
         let { signingRegion, signingName } = validatedProps;
         const handlerExecutionContext = signingProperties.context;
         if (handlerExecutionContext?.authSchemes?.length ?? 0 > 1) {
@@ -7370,7 +7370,7 @@ var init_AwsSdkSigV4Signer = __esm({
           }
         }
         const signedRequest = await signer.sign(httpRequest, {
-          signingDate: getSkewCorrectedDate(config2.systemClockOffset),
+          signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion,
           signingService: signingName
         });
@@ -7380,10 +7380,10 @@ var init_AwsSdkSigV4Signer = __esm({
         return (error) => {
           const serverTime = error.ServerTime ?? getDateHeader(error.$response);
           if (serverTime) {
-            const config2 = throwSigningPropertyError("config", signingProperties.config);
-            const initialSystemClockOffset = config2.systemClockOffset;
-            config2.systemClockOffset = getUpdatedSystemClockOffset(serverTime, config2.systemClockOffset);
-            const clockSkewCorrected = config2.systemClockOffset !== initialSystemClockOffset;
+            const config = throwSigningPropertyError("config", signingProperties.config);
+            const initialSystemClockOffset = config.systemClockOffset;
+            config.systemClockOffset = getUpdatedSystemClockOffset(serverTime, config.systemClockOffset);
+            const clockSkewCorrected = config.systemClockOffset !== initialSystemClockOffset;
             if (clockSkewCorrected && error.$metadata) {
               error.$metadata.clockSkewCorrected = true;
             }
@@ -7394,8 +7394,8 @@ var init_AwsSdkSigV4Signer = __esm({
       successHandler(httpResponse, signingProperties) {
         const dateHeader = getDateHeader(httpResponse);
         if (dateHeader) {
-          const config2 = throwSigningPropertyError("config", signingProperties.config);
-          config2.systemClockOffset = getUpdatedSystemClockOffset(dateHeader, config2.systemClockOffset);
+          const config = throwSigningPropertyError("config", signingProperties.config);
+          config.systemClockOffset = getUpdatedSystemClockOffset(dateHeader, config.systemClockOffset);
         }
       }
     };
@@ -7415,11 +7415,11 @@ var init_AwsSdkSigV4ASigner = __esm({
         if (!import_protocol_http11.HttpRequest.isInstance(httpRequest)) {
           throw new Error("The request is not an instance of `HttpRequest` and cannot be signed");
         }
-        const { config: config2, signer, signingRegion, signingRegionSet, signingName } = await validateSigningProperties(signingProperties);
-        const configResolvedSigningRegionSet = await config2.sigv4aSigningRegionSet?.();
+        const { config, signer, signingRegion, signingRegionSet, signingName } = await validateSigningProperties(signingProperties);
+        const configResolvedSigningRegionSet = await config.sigv4aSigningRegionSet?.();
         const multiRegionOverride = (configResolvedSigningRegionSet ?? signingRegionSet ?? [signingRegion]).join(",");
         const signedRequest = await signer.sign(httpRequest, {
-          signingDate: getSkewCorrectedDate(config2.systemClockOffset),
+          signingDate: getSkewCorrectedDate(config.systemClockOffset),
           signingRegion: multiRegionOverride,
           signingService: signingName
         });
@@ -7631,9 +7631,9 @@ var init_resolveAwsSdkSigV4AConfig = __esm({
   "node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4AConfig.js"() {
     init_dist_es();
     import_property_provider = __toESM(require_dist_cjs22());
-    resolveAwsSdkSigV4AConfig = (config2) => {
-      config2.sigv4aSigningRegionSet = normalizeProvider2(config2.sigv4aSigningRegionSet);
-      return config2;
+    resolveAwsSdkSigV4AConfig = (config) => {
+      config.sigv4aSigningRegionSet = normalizeProvider2(config.sigv4aSigningRegionSet);
+      return config;
     };
     NODE_SIGV4A_CONFIG_OPTIONS = {
       environmentVariableSelector(env) {
@@ -8283,7 +8283,7 @@ ${(0, import_util_hex_encoding.toHex)(hashedRequest)}`;
 });
 
 // node_modules/@aws-sdk/core/dist-es/submodules/httpAuthSchemes/aws_sdk/resolveAwsSdkSigV4Config.js
-function normalizeCredentialProvider(config2, { credentials, credentialDefaultProvider }) {
+function normalizeCredentialProvider(config, { credentials, credentialDefaultProvider }) {
   let credentialsProvider;
   if (credentials) {
     if (!credentials?.memoized) {
@@ -8293,8 +8293,8 @@ function normalizeCredentialProvider(config2, { credentials, credentialDefaultPr
     }
   } else {
     if (credentialDefaultProvider) {
-      credentialsProvider = normalizeProvider2(credentialDefaultProvider(Object.assign({}, config2, {
-        parentClientConfig: config2
+      credentialsProvider = normalizeProvider2(credentialDefaultProvider(Object.assign({}, config, {
+        parentClientConfig: config
       })));
     } else {
       credentialsProvider = async () => {
@@ -8305,11 +8305,11 @@ function normalizeCredentialProvider(config2, { credentials, credentialDefaultPr
   credentialsProvider.memoized = true;
   return credentialsProvider;
 }
-function bindCallerConfig(config2, credentialsProvider) {
+function bindCallerConfig(config, credentialsProvider) {
   if (credentialsProvider.configBound) {
     return credentialsProvider;
   }
-  const fn = async (options) => credentialsProvider({ ...options, callerClientConfig: config2 });
+  const fn = async (options) => credentialsProvider({ ...options, callerClientConfig: config });
   fn.memoized = credentialsProvider.memoized;
   fn.configBound = true;
   return fn;
@@ -8320,21 +8320,21 @@ var init_resolveAwsSdkSigV4Config = __esm({
     init_client();
     init_dist_es();
     import_signature_v4 = __toESM(require_dist_cjs23());
-    resolveAwsSdkSigV4Config = (config2) => {
-      let inputCredentials = config2.credentials;
-      let isUserSupplied = !!config2.credentials;
+    resolveAwsSdkSigV4Config = (config) => {
+      let inputCredentials = config.credentials;
+      let isUserSupplied = !!config.credentials;
       let resolvedCredentials = void 0;
-      Object.defineProperty(config2, "credentials", {
+      Object.defineProperty(config, "credentials", {
         set(credentials) {
           if (credentials && credentials !== inputCredentials && credentials !== resolvedCredentials) {
             isUserSupplied = true;
           }
           inputCredentials = credentials;
-          const memoizedProvider = normalizeCredentialProvider(config2, {
+          const memoizedProvider = normalizeCredentialProvider(config, {
             credentials: inputCredentials,
-            credentialDefaultProvider: config2.credentialDefaultProvider
+            credentialDefaultProvider: config.credentialDefaultProvider
           });
-          const boundProvider = bindCallerConfig(config2, memoizedProvider);
+          const boundProvider = bindCallerConfig(config, memoizedProvider);
           if (isUserSupplied && !boundProvider.attributed) {
             resolvedCredentials = async (options) => boundProvider(options).then((creds) => setCredentialFeature(creds, "CREDENTIALS_CODE", "e"));
             resolvedCredentials.memoized = boundProvider.memoized;
@@ -8350,58 +8350,58 @@ var init_resolveAwsSdkSigV4Config = __esm({
         enumerable: true,
         configurable: true
       });
-      config2.credentials = inputCredentials;
-      const { signingEscapePath = true, systemClockOffset = config2.systemClockOffset || 0, sha256 } = config2;
+      config.credentials = inputCredentials;
+      const { signingEscapePath = true, systemClockOffset = config.systemClockOffset || 0, sha256 } = config;
       let signer;
-      if (config2.signer) {
-        signer = normalizeProvider2(config2.signer);
-      } else if (config2.regionInfoProvider) {
-        signer = () => normalizeProvider2(config2.region)().then(async (region) => [
-          await config2.regionInfoProvider(region, {
-            useFipsEndpoint: await config2.useFipsEndpoint(),
-            useDualstackEndpoint: await config2.useDualstackEndpoint()
+      if (config.signer) {
+        signer = normalizeProvider2(config.signer);
+      } else if (config.regionInfoProvider) {
+        signer = () => normalizeProvider2(config.region)().then(async (region) => [
+          await config.regionInfoProvider(region, {
+            useFipsEndpoint: await config.useFipsEndpoint(),
+            useDualstackEndpoint: await config.useDualstackEndpoint()
           }) || {},
           region
         ]).then(([regionInfo, region]) => {
           const { signingRegion, signingService } = regionInfo;
-          config2.signingRegion = config2.signingRegion || signingRegion || region;
-          config2.signingName = config2.signingName || signingService || config2.serviceId;
+          config.signingRegion = config.signingRegion || signingRegion || region;
+          config.signingName = config.signingName || signingService || config.serviceId;
           const params = {
-            ...config2,
-            credentials: config2.credentials,
-            region: config2.signingRegion,
-            service: config2.signingName,
+            ...config,
+            credentials: config.credentials,
+            region: config.signingRegion,
+            service: config.signingName,
             sha256,
             uriEscapePath: signingEscapePath
           };
-          const SignerCtor = config2.signerConstructor || import_signature_v4.SignatureV4;
+          const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
           return new SignerCtor(params);
         });
       } else {
         signer = async (authScheme) => {
           authScheme = Object.assign({}, {
             name: "sigv4",
-            signingName: config2.signingName || config2.defaultSigningName,
-            signingRegion: await normalizeProvider2(config2.region)(),
+            signingName: config.signingName || config.defaultSigningName,
+            signingRegion: await normalizeProvider2(config.region)(),
             properties: {}
           }, authScheme);
           const signingRegion = authScheme.signingRegion;
           const signingService = authScheme.signingName;
-          config2.signingRegion = config2.signingRegion || signingRegion;
-          config2.signingName = config2.signingName || signingService || config2.serviceId;
+          config.signingRegion = config.signingRegion || signingRegion;
+          config.signingName = config.signingName || signingService || config.serviceId;
           const params = {
-            ...config2,
-            credentials: config2.credentials,
-            region: config2.signingRegion,
-            service: config2.signingName,
+            ...config,
+            credentials: config.credentials,
+            region: config.signingRegion,
+            service: config.signingName,
             sha256,
             uriEscapePath: signingEscapePath
           };
-          const SignerCtor = config2.signerConstructor || import_signature_v4.SignatureV4;
+          const SignerCtor = config.signerConstructor || import_signature_v4.SignatureV4;
           return new SignerCtor(params);
         };
       }
-      const resolvedConfig = Object.assign(config2, {
+      const resolvedConfig = Object.assign(config, {
         systemClockOffset,
         signingEscapePath,
         signer
@@ -8956,8 +8956,8 @@ var require_dist_cjs26 = __commonJS({
     module2.exports = __toCommonJS2(src_exports);
     var import_middleware_stack = require_dist_cjs25();
     var Client = class {
-      constructor(config2) {
-        this.config = config2;
+      constructor(config) {
+        this.config = config;
         this.middlewareStack = (0, import_middleware_stack.constructStack)();
       }
       static {
@@ -9312,15 +9312,15 @@ var require_dist_cjs26 = __commonJS({
       }
     }, "loadConfigsForDefaultMode");
     var warningEmitted = false;
-    var emitWarningIfUnsupportedVersion4 = /* @__PURE__ */ __name((version2) => {
-      if (version2 && !warningEmitted && parseInt(version2.substring(1, version2.indexOf("."))) < 16) {
+    var emitWarningIfUnsupportedVersion4 = /* @__PURE__ */ __name((version3) => {
+      if (version3 && !warningEmitted && parseInt(version3.substring(1, version3.indexOf("."))) < 16) {
         warningEmitted = true;
       }
     }, "emitWarningIfUnsupportedVersion");
     var getChecksumConfiguration = /* @__PURE__ */ __name((runtimeConfig) => {
       const checksumAlgorithms = [];
-      for (const id2 in import_types5.AlgorithmId) {
-        const algorithmId = import_types5.AlgorithmId[id2];
+      for (const id in import_types5.AlgorithmId) {
+        const algorithmId = import_types5.AlgorithmId[id];
         if (runtimeConfig[algorithmId] === void 0) {
           continue;
         }
@@ -9364,8 +9364,8 @@ var require_dist_cjs26 = __commonJS({
       return Object.assign(getChecksumConfiguration(runtimeConfig), getRetryConfiguration(runtimeConfig));
     }, "getDefaultExtensionConfiguration");
     var getDefaultClientConfiguration = getDefaultExtensionConfiguration3;
-    var resolveDefaultRuntimeConfig3 = /* @__PURE__ */ __name((config2) => {
-      return Object.assign(resolveChecksumRuntimeConfig(config2), resolveRetryRuntimeConfig(config2));
+    var resolveDefaultRuntimeConfig3 = /* @__PURE__ */ __name((config) => {
+      return Object.assign(resolveChecksumRuntimeConfig(config), resolveRetryRuntimeConfig(config));
     }, "resolveDefaultRuntimeConfig");
     var getArrayIfSingleItem = /* @__PURE__ */ __name((mayBeArray) => Array.isArray(mayBeArray) ? mayBeArray : [mayBeArray], "getArrayIfSingleItem");
     var getValueFromTextNode3 = /* @__PURE__ */ __name((obj) => {
@@ -13058,13 +13058,13 @@ var require_dist_cjs28 = __commonJS({
     var import_protocol_http15 = require_dist_cjs3();
     var import_core22 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var ACCOUNT_ID_ENDPOINT_REGEX = /\d{12}\.ddb/;
-    async function checkFeatures(context, config2, args) {
+    async function checkFeatures(context, config, args) {
       const request = args.request;
       if (request?.headers?.["smithy-protocol"] === "rpc-v2-cbor") {
         (0, import_core22.setFeature)(context, "PROTOCOL_RPC_V2_CBOR", "M");
       }
-      if (typeof config2.retryStrategy === "function") {
-        const retryStrategy = await config2.retryStrategy();
+      if (typeof config.retryStrategy === "function") {
+        const retryStrategy = await config.retryStrategy();
         if (typeof retryStrategy.acquireInitialRetryToken === "function") {
           if (retryStrategy.constructor?.name?.includes("Adaptive")) {
             (0, import_core22.setFeature)(context, "RETRY_MODE_ADAPTIVE", "F");
@@ -13075,12 +13075,12 @@ var require_dist_cjs28 = __commonJS({
           (0, import_core22.setFeature)(context, "RETRY_MODE_LEGACY", "D");
         }
       }
-      if (typeof config2.accountIdEndpointMode === "function") {
+      if (typeof config.accountIdEndpointMode === "function") {
         const endpointV2 = context.endpointV2;
         if (String(endpointV2?.url?.hostname).match(ACCOUNT_ID_ENDPOINT_REGEX)) {
           (0, import_core22.setFeature)(context, "ACCOUNT_ID_ENDPOINT", "O");
         }
-        switch (await config2.accountIdEndpointMode?.()) {
+        switch (await config.accountIdEndpointMode?.()) {
           case "disabled":
             (0, import_core22.setFeature)(context, "ACCOUNT_ID_MODE_DISABLED", "Q");
             break;
@@ -13170,14 +13170,14 @@ var require_dist_cjs28 = __commonJS({
     }, "userAgentMiddleware");
     var escapeUserAgent = /* @__PURE__ */ __name((userAgentPair) => {
       const name = userAgentPair[0].split(UA_NAME_SEPARATOR).map((part) => part.replace(UA_NAME_ESCAPE_REGEX, UA_ESCAPE_CHAR)).join(UA_NAME_SEPARATOR);
-      const version2 = userAgentPair[1]?.replace(UA_VALUE_ESCAPE_REGEX, UA_ESCAPE_CHAR);
+      const version3 = userAgentPair[1]?.replace(UA_VALUE_ESCAPE_REGEX, UA_ESCAPE_CHAR);
       const prefixSeparatorIndex = name.indexOf(UA_NAME_SEPARATOR);
       const prefix = name.substring(0, prefixSeparatorIndex);
       let uaName = name.substring(prefixSeparatorIndex + 1);
       if (prefix === "api") {
         uaName = uaName.toLowerCase();
       }
-      return [prefix, uaName, version2].filter((item) => item && item.length > 0).reduce((acc, item, index) => {
+      return [prefix, uaName, version3].filter((item) => item && item.length > 0).reduce((acc, item, index) => {
         switch (index) {
           case 0:
             return item;
@@ -13195,9 +13195,9 @@ var require_dist_cjs28 = __commonJS({
       tags: ["SET_USER_AGENT", "USER_AGENT"],
       override: true
     };
-    var getUserAgentPlugin3 = /* @__PURE__ */ __name((config2) => ({
+    var getUserAgentPlugin3 = /* @__PURE__ */ __name((config) => ({
       applyToStack: /* @__PURE__ */ __name((clientStack) => {
-        clientStack.add(userAgentMiddleware(config2), getUserAgentMiddlewareOptions);
+        clientStack.add(userAgentMiddleware(config), getUserAgentMiddlewareOptions);
       }, "applyToStack")
     }), "getUserAgentPlugin");
   }
@@ -13503,7 +13503,7 @@ var require_dist_cjs31 = __commonJS({
   }
 });
 
-// node_modules/uuid/dist/esm-node/rng.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/rng.js
 function rng() {
   if (poolPtr > rnds8Pool.length - 16) {
     import_crypto.default.randomFillSync(rnds8Pool);
@@ -13513,34 +13513,34 @@ function rng() {
 }
 var import_crypto, rnds8Pool, poolPtr;
 var init_rng = __esm({
-  "node_modules/uuid/dist/esm-node/rng.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/rng.js"() {
     import_crypto = __toESM(require("crypto"));
     rnds8Pool = new Uint8Array(256);
     poolPtr = rnds8Pool.length;
   }
 });
 
-// node_modules/uuid/dist/esm-node/regex.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/regex.js
 var regex_default;
 var init_regex = __esm({
-  "node_modules/uuid/dist/esm-node/regex.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/regex.js"() {
     regex_default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
   }
 });
 
-// node_modules/uuid/dist/esm-node/validate.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/validate.js
 function validate(uuid) {
   return typeof uuid === "string" && regex_default.test(uuid);
 }
 var validate_default;
 var init_validate = __esm({
-  "node_modules/uuid/dist/esm-node/validate.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/validate.js"() {
     init_regex();
     validate_default = validate;
   }
 });
 
-// node_modules/uuid/dist/esm-node/stringify.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/stringify.js
 function unsafeStringify(arr, offset = 0) {
   return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];
 }
@@ -13553,7 +13553,7 @@ function stringify(arr, offset = 0) {
 }
 var byteToHex, stringify_default;
 var init_stringify = __esm({
-  "node_modules/uuid/dist/esm-node/stringify.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/stringify.js"() {
     init_validate();
     byteToHex = [];
     for (let i3 = 0; i3 < 256; ++i3) {
@@ -13563,7 +13563,7 @@ var init_stringify = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/v1.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v1.js
 function v1(options, buf, offset) {
   let i3 = buf && offset || 0;
   const b3 = buf || new Array(16);
@@ -13614,7 +13614,7 @@ function v1(options, buf, offset) {
 }
 var _nodeId, _clockseq, _lastMSecs, _lastNSecs, v1_default;
 var init_v1 = __esm({
-  "node_modules/uuid/dist/esm-node/v1.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v1.js"() {
     init_rng();
     init_stringify();
     _lastMSecs = 0;
@@ -13623,7 +13623,7 @@ var init_v1 = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/parse.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/parse.js
 function parse(uuid) {
   if (!validate_default(uuid)) {
     throw TypeError("Invalid UUID");
@@ -13650,13 +13650,13 @@ function parse(uuid) {
 }
 var parse_default;
 var init_parse = __esm({
-  "node_modules/uuid/dist/esm-node/parse.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/parse.js"() {
     init_validate();
     parse_default = parse;
   }
 });
 
-// node_modules/uuid/dist/esm-node/v35.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v35.js
 function stringToBytes(str) {
   str = unescape(encodeURIComponent(str));
   const bytes = [];
@@ -13665,7 +13665,7 @@ function stringToBytes(str) {
   }
   return bytes;
 }
-function v35(name, version2, hashfunc) {
+function v35(name, version3, hashfunc) {
   function generateUUID(value, namespace, buf, offset) {
     var _namespace;
     if (typeof value === "string") {
@@ -13681,7 +13681,7 @@ function v35(name, version2, hashfunc) {
     bytes.set(namespace);
     bytes.set(value, namespace.length);
     bytes = hashfunc(bytes);
-    bytes[6] = bytes[6] & 15 | version2;
+    bytes[6] = bytes[6] & 15 | version3;
     bytes[8] = bytes[8] & 63 | 128;
     if (buf) {
       offset = offset || 0;
@@ -13702,7 +13702,7 @@ function v35(name, version2, hashfunc) {
 }
 var DNS, URL2;
 var init_v35 = __esm({
-  "node_modules/uuid/dist/esm-node/v35.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v35.js"() {
     init_stringify();
     init_parse();
     DNS = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -13710,7 +13710,7 @@ var init_v35 = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/md5.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/md5.js
 function md5(bytes) {
   if (Array.isArray(bytes)) {
     bytes = Buffer.from(bytes);
@@ -13721,16 +13721,16 @@ function md5(bytes) {
 }
 var import_crypto2, md5_default;
 var init_md5 = __esm({
-  "node_modules/uuid/dist/esm-node/md5.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/md5.js"() {
     import_crypto2 = __toESM(require("crypto"));
     md5_default = md5;
   }
 });
 
-// node_modules/uuid/dist/esm-node/v3.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v3.js
 var v3, v3_default;
 var init_v3 = __esm({
-  "node_modules/uuid/dist/esm-node/v3.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v3.js"() {
     init_v35();
     init_md5();
     v3 = v35("v3", 48, md5_default);
@@ -13738,10 +13738,10 @@ var init_v3 = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/native.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/native.js
 var import_crypto3, native_default;
 var init_native = __esm({
-  "node_modules/uuid/dist/esm-node/native.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/native.js"() {
     import_crypto3 = __toESM(require("crypto"));
     native_default = {
       randomUUID: import_crypto3.default.randomUUID
@@ -13749,7 +13749,7 @@ var init_native = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/v4.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v4.js
 function v4(options, buf, offset) {
   if (native_default.randomUUID && !buf && !options) {
     return native_default.randomUUID();
@@ -13769,7 +13769,7 @@ function v4(options, buf, offset) {
 }
 var v4_default;
 var init_v4 = __esm({
-  "node_modules/uuid/dist/esm-node/v4.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v4.js"() {
     init_native();
     init_rng();
     init_stringify();
@@ -13777,7 +13777,7 @@ var init_v4 = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/sha1.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/sha1.js
 function sha1(bytes) {
   if (Array.isArray(bytes)) {
     bytes = Buffer.from(bytes);
@@ -13788,16 +13788,16 @@ function sha1(bytes) {
 }
 var import_crypto4, sha1_default;
 var init_sha1 = __esm({
-  "node_modules/uuid/dist/esm-node/sha1.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/sha1.js"() {
     import_crypto4 = __toESM(require("crypto"));
     sha1_default = sha1;
   }
 });
 
-// node_modules/uuid/dist/esm-node/v5.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v5.js
 var v5, v5_default;
 var init_v5 = __esm({
-  "node_modules/uuid/dist/esm-node/v5.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/v5.js"() {
     init_v35();
     init_sha1();
     v5 = v35("v5", 80, sha1_default);
@@ -13805,15 +13805,15 @@ var init_v5 = __esm({
   }
 });
 
-// node_modules/uuid/dist/esm-node/nil.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/nil.js
 var nil_default;
 var init_nil = __esm({
-  "node_modules/uuid/dist/esm-node/nil.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/nil.js"() {
     nil_default = "00000000-0000-0000-0000-000000000000";
   }
 });
 
-// node_modules/uuid/dist/esm-node/version.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/version.js
 function version(uuid) {
   if (!validate_default(uuid)) {
     throw TypeError("Invalid UUID");
@@ -13822,13 +13822,13 @@ function version(uuid) {
 }
 var version_default;
 var init_version = __esm({
-  "node_modules/uuid/dist/esm-node/version.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/version.js"() {
     init_validate();
     version_default = version;
   }
 });
 
-// node_modules/uuid/dist/esm-node/index.js
+// node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/index.js
 var esm_node_exports = {};
 __export(esm_node_exports, {
   NIL: () => nil_default,
@@ -13842,7 +13842,7 @@ __export(esm_node_exports, {
   version: () => version_default
 });
 var init_esm_node = __esm({
-  "node_modules/uuid/dist/esm-node/index.js"() {
+  "node_modules/@smithy/middleware-retry/node_modules/uuid/dist/esm-node/index.js"() {
     init_v1();
     init_v3();
     init_v4();
@@ -14330,7 +14330,7 @@ var require_dist_cjs34 = __commonJS({
     });
     module2.exports = __toCommonJS2(src_exports);
     var import_protocol_http15 = require_dist_cjs3();
-    var import_uuid = (init_esm_node(), __toCommonJS(esm_node_exports));
+    var import_uuid2 = (init_esm_node(), __toCommonJS(esm_node_exports));
     var import_util_retry3 = require_dist_cjs33();
     var getDefaultRetryQuota = /* @__PURE__ */ __name((initialRetryTokens, options) => {
       const MAX_CAPACITY = initialRetryTokens;
@@ -14405,7 +14405,7 @@ var require_dist_cjs34 = __commonJS({
         const maxAttempts = await this.getMaxAttempts();
         const { request } = args;
         if (import_protocol_http15.HttpRequest.isInstance(request)) {
-          request.headers[import_util_retry3.INVOCATION_ID_HEADER] = (0, import_uuid.v4)();
+          request.headers[import_util_retry3.INVOCATION_ID_HEADER] = (0, import_uuid2.v4)();
         }
         while (true) {
           try {
@@ -14566,7 +14566,7 @@ var require_dist_cjs34 = __commonJS({
         const { request } = args;
         const isRequest = import_protocol_http15.HttpRequest.isInstance(request);
         if (isRequest) {
-          request.headers[import_util_retry3.INVOCATION_ID_HEADER] = (0, import_uuid.v4)();
+          request.headers[import_util_retry3.INVOCATION_ID_HEADER] = (0, import_uuid2.v4)();
         }
         while (true) {
           try {
@@ -14667,10 +14667,10 @@ var require_httpAuthSchemeProvider = __commonJS({
     exports2.resolveHttpAuthSchemeConfig = exports2.defaultDynamoDBHttpAuthSchemeProvider = exports2.defaultDynamoDBHttpAuthSchemeParametersProvider = void 0;
     var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var util_middleware_1 = require_dist_cjs2();
-    var defaultDynamoDBHttpAuthSchemeParametersProvider = async (config2, context, input) => {
+    var defaultDynamoDBHttpAuthSchemeParametersProvider = async (config, context, input) => {
       return {
         operation: (0, util_middleware_1.getSmithyContext)(context).operation,
-        region: await (0, util_middleware_1.normalizeProvider)(config2.region)() || (() => {
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
           throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
         })()
       };
@@ -14683,9 +14683,9 @@ var require_httpAuthSchemeProvider = __commonJS({
           name: "dynamodb",
           region: authParameters.region
         },
-        propertiesExtractor: (config2, context) => ({
+        propertiesExtractor: (config, context) => ({
           signingProperties: {
-            config: config2,
+            config,
             context
           }
         })
@@ -14701,10 +14701,10 @@ var require_httpAuthSchemeProvider = __commonJS({
       return options;
     };
     exports2.defaultDynamoDBHttpAuthSchemeProvider = defaultDynamoDBHttpAuthSchemeProvider;
-    var resolveHttpAuthSchemeConfig3 = (config2) => {
-      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config2);
+    var resolveHttpAuthSchemeConfig3 = (config) => {
+      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config);
       return Object.assign(config_0, {
-        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config2.authSchemePreference ?? [])
+        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config.authSchemePreference ?? [])
       });
     };
     exports2.resolveHttpAuthSchemeConfig = resolveHttpAuthSchemeConfig3;
@@ -14752,9 +14752,9 @@ var require_getSSOTokenFilepath = __commonJS({
     var crypto_1 = require("crypto");
     var path_1 = require("path");
     var getHomeDir_1 = require_getHomeDir();
-    var getSSOTokenFilepath2 = (id2) => {
+    var getSSOTokenFilepath2 = (id) => {
       const hasher = (0, crypto_1.createHash)("sha1");
-      const cacheName = hasher.update(id2).digest("hex");
+      const cacheName = hasher.update(id).digest("hex");
       return (0, path_1.join)((0, getHomeDir_1.getHomeDir)(), ".aws", "sso", "cache", `${cacheName}.json`);
     };
     exports2.getSSOTokenFilepath = getSSOTokenFilepath2;
@@ -14770,8 +14770,8 @@ var require_getSSOTokenFromFile = __commonJS({
     var fs_1 = require("fs");
     var getSSOTokenFilepath_1 = require_getSSOTokenFilepath();
     var { readFile } = fs_1.promises;
-    var getSSOTokenFromFile2 = async (id2) => {
-      const ssoTokenFilepath = (0, getSSOTokenFilepath_1.getSSOTokenFilepath)(id2);
+    var getSSOTokenFromFile2 = async (id) => {
+      const ssoTokenFilepath = (0, getSSOTokenFilepath_1.getSSOTokenFilepath)(id);
       const ssoTokenText = await readFile(ssoTokenFilepath, "utf8");
       return JSON.parse(ssoTokenText);
     };
@@ -15004,11 +15004,11 @@ var require_dist_cjs36 = __commonJS({
     __name(getSelectorName, "getSelectorName");
     var fromEnv = /* @__PURE__ */ __name((envVarSelector, options) => async () => {
       try {
-        const config2 = envVarSelector(process.env, options);
-        if (config2 === void 0) {
+        const config = envVarSelector(process.env, options);
+        if (config === void 0) {
           throw new Error();
         }
-        return config2;
+        return config;
       } catch (e3) {
         throw new import_property_provider2.CredentialsProviderError(
           e3.message || `Not found in ENV: ${getSelectorName(envVarSelector.toString())}`,
@@ -15073,9 +15073,9 @@ var require_getEndpointUrlConfig = __commonJS({
           return endpointUrl;
         return void 0;
       },
-      configFileSelector: (profile, config2) => {
-        if (config2 && profile.services) {
-          const servicesSection = config2[["services", profile.services].join(shared_ini_file_loader_1.CONFIG_PREFIX_SEPARATOR)];
+      configFileSelector: (profile, config) => {
+        if (config && profile.services) {
+          const servicesSection = config[["services", profile.services].join(shared_ini_file_loader_1.CONFIG_PREFIX_SEPARATOR)];
           if (servicesSection) {
             const servicePrefixParts = serviceId.split(" ").map((w3) => w3.toLowerCase());
             const endpointUrl2 = servicesSection[[servicePrefixParts.join("_"), CONFIG_ENDPOINT_URL].join(shared_ini_file_loader_1.CONFIG_PREFIX_SEPARATOR)];
@@ -15269,9 +15269,9 @@ var require_dist_cjs39 = __commonJS({
       }
       return isValidArn;
     }, "isArnBucketName");
-    var createConfigValueProvider = /* @__PURE__ */ __name((configKey, canonicalEndpointParamKey, config2) => {
+    var createConfigValueProvider = /* @__PURE__ */ __name((configKey, canonicalEndpointParamKey, config) => {
       const configProvider = /* @__PURE__ */ __name(async () => {
-        const configValue = config2[configKey] ?? config2[canonicalEndpointParamKey];
+        const configValue = config[configKey] ?? config[canonicalEndpointParamKey];
         if (typeof configValue === "function") {
           return configValue();
         }
@@ -15279,14 +15279,14 @@ var require_dist_cjs39 = __commonJS({
       }, "configProvider");
       if (configKey === "credentialScope" || canonicalEndpointParamKey === "CredentialScope") {
         return async () => {
-          const credentials = typeof config2.credentials === "function" ? await config2.credentials() : config2.credentials;
+          const credentials = typeof config.credentials === "function" ? await config.credentials() : config.credentials;
           const configValue = credentials?.credentialScope ?? credentials?.CredentialScope;
           return configValue;
         };
       }
       if (configKey === "accountId" || canonicalEndpointParamKey === "AccountId") {
         return async () => {
-          const credentials = typeof config2.credentials === "function" ? await config2.credentials() : config2.credentials;
+          const credentials = typeof config.credentials === "function" ? await config.credentials() : config.credentials;
           const configValue = credentials?.accountId ?? credentials?.AccountId;
           return configValue;
         };
@@ -15371,11 +15371,11 @@ var require_dist_cjs39 = __commonJS({
     var import_core17 = (init_dist_es(), __toCommonJS(dist_es_exports));
     var import_util_middleware8 = require_dist_cjs2();
     var endpointMiddleware = /* @__PURE__ */ __name(({
-      config: config2,
+      config,
       instructions
     }) => {
       return (next, context) => async (args) => {
-        if (config2.endpoint) {
+        if (config.endpoint) {
           (0, import_core17.setFeature)(context, "ENDPOINT_OVERRIDE", "N");
         }
         const endpoint = await getEndpointFromInstructions(
@@ -15385,7 +15385,7 @@ var require_dist_cjs39 = __commonJS({
               return instructions;
             }
           },
-          { ...config2 },
+          { ...config },
           context
         );
         context.endpointV2 = endpoint;
@@ -15424,11 +15424,11 @@ var require_dist_cjs39 = __commonJS({
       relation: "before",
       toMiddleware: import_middleware_serde5.serializerMiddlewareOption.name
     };
-    var getEndpointPlugin4 = /* @__PURE__ */ __name((config2, instructions) => ({
+    var getEndpointPlugin4 = /* @__PURE__ */ __name((config, instructions) => ({
       applyToStack: (clientStack) => {
         clientStack.addRelativeTo(
           endpointMiddleware({
-            config: config2,
+            config,
             instructions
           }),
           endpointMiddlewareOptions
@@ -15468,6 +15468,358 @@ var require_dist_cjs39 = __commonJS({
       }
       return input;
     }, "resolveEndpointRequiredConfig");
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/rng.js
+function rng2() {
+  if (poolPtr2 > rnds8Pool2.length - 16) {
+    import_crypto5.default.randomFillSync(rnds8Pool2);
+    poolPtr2 = 0;
+  }
+  return rnds8Pool2.slice(poolPtr2, poolPtr2 += 16);
+}
+var import_crypto5, rnds8Pool2, poolPtr2;
+var init_rng2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/rng.js"() {
+    import_crypto5 = __toESM(require("crypto"));
+    rnds8Pool2 = new Uint8Array(256);
+    poolPtr2 = rnds8Pool2.length;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/regex.js
+var regex_default2;
+var init_regex2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/regex.js"() {
+    regex_default2 = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/validate.js
+function validate2(uuid) {
+  return typeof uuid === "string" && regex_default2.test(uuid);
+}
+var validate_default2;
+var init_validate2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/validate.js"() {
+    init_regex2();
+    validate_default2 = validate2;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/stringify.js
+function unsafeStringify2(arr, offset = 0) {
+  return byteToHex2[arr[offset + 0]] + byteToHex2[arr[offset + 1]] + byteToHex2[arr[offset + 2]] + byteToHex2[arr[offset + 3]] + "-" + byteToHex2[arr[offset + 4]] + byteToHex2[arr[offset + 5]] + "-" + byteToHex2[arr[offset + 6]] + byteToHex2[arr[offset + 7]] + "-" + byteToHex2[arr[offset + 8]] + byteToHex2[arr[offset + 9]] + "-" + byteToHex2[arr[offset + 10]] + byteToHex2[arr[offset + 11]] + byteToHex2[arr[offset + 12]] + byteToHex2[arr[offset + 13]] + byteToHex2[arr[offset + 14]] + byteToHex2[arr[offset + 15]];
+}
+function stringify2(arr, offset = 0) {
+  const uuid = unsafeStringify2(arr, offset);
+  if (!validate_default2(uuid)) {
+    throw TypeError("Stringified UUID is invalid");
+  }
+  return uuid;
+}
+var byteToHex2, stringify_default2;
+var init_stringify2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/stringify.js"() {
+    init_validate2();
+    byteToHex2 = [];
+    for (let i3 = 0; i3 < 256; ++i3) {
+      byteToHex2.push((i3 + 256).toString(16).slice(1));
+    }
+    stringify_default2 = stringify2;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v1.js
+function v12(options, buf, offset) {
+  let i3 = buf && offset || 0;
+  const b3 = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId2;
+  let clockseq = options.clockseq !== void 0 ? options.clockseq : _clockseq2;
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || rng2)();
+    if (node == null) {
+      node = _nodeId2 = [seedBytes[0] | 1, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+    if (clockseq == null) {
+      clockseq = _clockseq2 = (seedBytes[6] << 8 | seedBytes[7]) & 16383;
+    }
+  }
+  let msecs = options.msecs !== void 0 ? options.msecs : Date.now();
+  let nsecs = options.nsecs !== void 0 ? options.nsecs : _lastNSecs2 + 1;
+  const dt = msecs - _lastMSecs2 + (nsecs - _lastNSecs2) / 1e4;
+  if (dt < 0 && options.clockseq === void 0) {
+    clockseq = clockseq + 1 & 16383;
+  }
+  if ((dt < 0 || msecs > _lastMSecs2) && options.nsecs === void 0) {
+    nsecs = 0;
+  }
+  if (nsecs >= 1e4) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+  _lastMSecs2 = msecs;
+  _lastNSecs2 = nsecs;
+  _clockseq2 = clockseq;
+  msecs += 122192928e5;
+  const tl = ((msecs & 268435455) * 1e4 + nsecs) % 4294967296;
+  b3[i3++] = tl >>> 24 & 255;
+  b3[i3++] = tl >>> 16 & 255;
+  b3[i3++] = tl >>> 8 & 255;
+  b3[i3++] = tl & 255;
+  const tmh = msecs / 4294967296 * 1e4 & 268435455;
+  b3[i3++] = tmh >>> 8 & 255;
+  b3[i3++] = tmh & 255;
+  b3[i3++] = tmh >>> 24 & 15 | 16;
+  b3[i3++] = tmh >>> 16 & 255;
+  b3[i3++] = clockseq >>> 8 | 128;
+  b3[i3++] = clockseq & 255;
+  for (let n3 = 0; n3 < 6; ++n3) {
+    b3[i3 + n3] = node[n3];
+  }
+  return buf || unsafeStringify2(b3);
+}
+var _nodeId2, _clockseq2, _lastMSecs2, _lastNSecs2, v1_default2;
+var init_v12 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v1.js"() {
+    init_rng2();
+    init_stringify2();
+    _lastMSecs2 = 0;
+    _lastNSecs2 = 0;
+    v1_default2 = v12;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/parse.js
+function parse2(uuid) {
+  if (!validate_default2(uuid)) {
+    throw TypeError("Invalid UUID");
+  }
+  let v6;
+  const arr = new Uint8Array(16);
+  arr[0] = (v6 = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v6 >>> 16 & 255;
+  arr[2] = v6 >>> 8 & 255;
+  arr[3] = v6 & 255;
+  arr[4] = (v6 = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v6 & 255;
+  arr[6] = (v6 = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v6 & 255;
+  arr[8] = (v6 = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v6 & 255;
+  arr[10] = (v6 = parseInt(uuid.slice(24, 36), 16)) / 1099511627776 & 255;
+  arr[11] = v6 / 4294967296 & 255;
+  arr[12] = v6 >>> 24 & 255;
+  arr[13] = v6 >>> 16 & 255;
+  arr[14] = v6 >>> 8 & 255;
+  arr[15] = v6 & 255;
+  return arr;
+}
+var parse_default2;
+var init_parse2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/parse.js"() {
+    init_validate2();
+    parse_default2 = parse2;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v35.js
+function stringToBytes2(str) {
+  str = unescape(encodeURIComponent(str));
+  const bytes = [];
+  for (let i3 = 0; i3 < str.length; ++i3) {
+    bytes.push(str.charCodeAt(i3));
+  }
+  return bytes;
+}
+function v352(name, version3, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    var _namespace;
+    if (typeof value === "string") {
+      value = stringToBytes2(value);
+    }
+    if (typeof namespace === "string") {
+      namespace = parse_default2(namespace);
+    }
+    if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
+      throw TypeError("Namespace must be array-like (16 iterable integer values, 0-255)");
+    }
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 15 | version3;
+    bytes[8] = bytes[8] & 63 | 128;
+    if (buf) {
+      offset = offset || 0;
+      for (let i3 = 0; i3 < 16; ++i3) {
+        buf[offset + i3] = bytes[i3];
+      }
+      return buf;
+    }
+    return unsafeStringify2(bytes);
+  }
+  try {
+    generateUUID.name = name;
+  } catch (err2) {
+  }
+  generateUUID.DNS = DNS2;
+  generateUUID.URL = URL3;
+  return generateUUID;
+}
+var DNS2, URL3;
+var init_v352 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v35.js"() {
+    init_stringify2();
+    init_parse2();
+    DNS2 = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+    URL3 = "6ba7b811-9dad-11d1-80b4-00c04fd430c8";
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/md5.js
+function md52(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === "string") {
+    bytes = Buffer.from(bytes, "utf8");
+  }
+  return import_crypto6.default.createHash("md5").update(bytes).digest();
+}
+var import_crypto6, md5_default2;
+var init_md52 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/md5.js"() {
+    import_crypto6 = __toESM(require("crypto"));
+    md5_default2 = md52;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v3.js
+var v32, v3_default2;
+var init_v32 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v3.js"() {
+    init_v352();
+    init_md52();
+    v32 = v352("v3", 48, md5_default2);
+    v3_default2 = v32;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/native.js
+var import_crypto7, native_default2;
+var init_native2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/native.js"() {
+    import_crypto7 = __toESM(require("crypto"));
+    native_default2 = {
+      randomUUID: import_crypto7.default.randomUUID
+    };
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v4.js
+function v42(options, buf, offset) {
+  if (native_default2.randomUUID && !buf && !options) {
+    return native_default2.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random || (options.rng || rng2)();
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    for (let i3 = 0; i3 < 16; ++i3) {
+      buf[offset + i3] = rnds[i3];
+    }
+    return buf;
+  }
+  return unsafeStringify2(rnds);
+}
+var v4_default2;
+var init_v42 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v4.js"() {
+    init_native2();
+    init_rng2();
+    init_stringify2();
+    v4_default2 = v42;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/sha1.js
+function sha12(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === "string") {
+    bytes = Buffer.from(bytes, "utf8");
+  }
+  return import_crypto8.default.createHash("sha1").update(bytes).digest();
+}
+var import_crypto8, sha1_default2;
+var init_sha12 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/sha1.js"() {
+    import_crypto8 = __toESM(require("crypto"));
+    sha1_default2 = sha12;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v5.js
+var v52, v5_default2;
+var init_v52 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/v5.js"() {
+    init_v352();
+    init_sha12();
+    v52 = v352("v5", 80, sha1_default2);
+    v5_default2 = v52;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/nil.js
+var nil_default2;
+var init_nil2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/nil.js"() {
+    nil_default2 = "00000000-0000-0000-0000-000000000000";
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/version.js
+function version2(uuid) {
+  if (!validate_default2(uuid)) {
+    throw TypeError("Invalid UUID");
+  }
+  return parseInt(uuid.slice(14, 15), 16);
+}
+var version_default2;
+var init_version2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/version.js"() {
+    init_validate2();
+    version_default2 = version2;
+  }
+});
+
+// node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/index.js
+var esm_node_exports2 = {};
+__export(esm_node_exports2, {
+  NIL: () => nil_default2,
+  parse: () => parse_default2,
+  stringify: () => stringify_default2,
+  v1: () => v1_default2,
+  v3: () => v3_default2,
+  v4: () => v4_default2,
+  v5: () => v5_default2,
+  validate: () => validate_default2,
+  version: () => version_default2
+});
+var init_esm_node2 = __esm({
+  "node_modules/@aws-sdk/client-dynamodb/node_modules/uuid/dist/esm-node/index.js"() {
+    init_v12();
+    init_v32();
+    init_v42();
+    init_v52();
+    init_nil2();
+    init_version2();
+    init_validate2();
+    init_stringify2();
+    init_parse2();
   }
 });
 
@@ -16776,10 +17128,10 @@ var require_httpAuthSchemeProvider2 = __commonJS({
     exports2.resolveHttpAuthSchemeConfig = exports2.defaultSSOHttpAuthSchemeProvider = exports2.defaultSSOHttpAuthSchemeParametersProvider = void 0;
     var core_1 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var util_middleware_1 = require_dist_cjs2();
-    var defaultSSOHttpAuthSchemeParametersProvider = async (config2, context, input) => {
+    var defaultSSOHttpAuthSchemeParametersProvider = async (config, context, input) => {
       return {
         operation: (0, util_middleware_1.getSmithyContext)(context).operation,
-        region: await (0, util_middleware_1.normalizeProvider)(config2.region)() || (() => {
+        region: await (0, util_middleware_1.normalizeProvider)(config.region)() || (() => {
           throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
         })()
       };
@@ -16792,9 +17144,9 @@ var require_httpAuthSchemeProvider2 = __commonJS({
           name: "awsssoportal",
           region: authParameters.region
         },
-        propertiesExtractor: (config2, context) => ({
+        propertiesExtractor: (config, context) => ({
           signingProperties: {
-            config: config2,
+            config,
             context
           }
         })
@@ -16831,10 +17183,10 @@ var require_httpAuthSchemeProvider2 = __commonJS({
       return options;
     };
     exports2.defaultSSOHttpAuthSchemeProvider = defaultSSOHttpAuthSchemeProvider;
-    var resolveHttpAuthSchemeConfig3 = (config2) => {
-      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config2);
+    var resolveHttpAuthSchemeConfig3 = (config) => {
+      const config_0 = (0, core_1.resolveAwsSdkSigV4Config)(config);
       return Object.assign(config_0, {
-        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config2.authSchemePreference ?? [])
+        authSchemePreference: (0, util_middleware_1.normalizeProvider)(config.authSchemePreference ?? [])
       });
     };
     exports2.resolveHttpAuthSchemeConfig = resolveHttpAuthSchemeConfig3;
@@ -16989,7 +17341,7 @@ var require_dist_cjs43 = __commonJS({
       return null;
     }, "isCrtAvailable");
     var createDefaultUserAgentProvider3 = /* @__PURE__ */ __name(({ serviceId, clientVersion }) => {
-      return async (config2) => {
+      return async (config) => {
         const sections = [
           // sdk-metadata
           ["aws-sdk-js", clientVersion],
@@ -17012,7 +17364,7 @@ var require_dist_cjs43 = __commonJS({
         if (import_process.env.AWS_EXECUTION_ENV) {
           sections.push([`exec-env/${import_process.env.AWS_EXECUTION_ENV}`]);
         }
-        const appId = await config2?.userAgentAppId?.();
+        const appId = await config?.userAgentAppId?.();
         const resolvedUserAgent = appId ? [...sections, [`app/${appId}`]] : [...sections];
         return resolvedUserAgent;
       };
@@ -17059,7 +17411,7 @@ var require_dist_cjs44 = __commonJS({
     var import_util_buffer_from = require_dist_cjs11();
     var import_util_utf86 = require_dist_cjs12();
     var import_buffer = require("buffer");
-    var import_crypto5 = require("crypto");
+    var import_crypto11 = require("crypto");
     var Hash3 = class {
       static {
         __name(this, "Hash");
@@ -17076,7 +17428,7 @@ var require_dist_cjs44 = __commonJS({
         return Promise.resolve(this.hash.digest());
       }
       reset() {
-        this.hash = this.secret ? (0, import_crypto5.createHmac)(this.algorithmIdentifier, castSourceData(this.secret)) : (0, import_crypto5.createHash)(this.algorithmIdentifier);
+        this.hash = this.secret ? (0, import_crypto11.createHmac)(this.algorithmIdentifier, castSourceData(this.secret)) : (0, import_crypto11.createHash)(this.algorithmIdentifier);
       }
     };
     function castSourceData(toCast, encoding) {
@@ -17217,16 +17569,16 @@ var require_runtimeConfig_shared = __commonJS({
     var util_utf8_1 = require_dist_cjs12();
     var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider2();
     var endpointResolver_1 = require_endpointResolver();
-    var getRuntimeConfig5 = (config2) => {
+    var getRuntimeConfig5 = (config) => {
       return {
         apiVersion: "2019-06-10",
-        base64Decoder: config2?.base64Decoder ?? util_base64_1.fromBase64,
-        base64Encoder: config2?.base64Encoder ?? util_base64_1.toBase64,
-        disableHostPrefix: config2?.disableHostPrefix ?? false,
-        endpointProvider: config2?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
-        extensions: config2?.extensions ?? [],
-        httpAuthSchemeProvider: config2?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultSSOHttpAuthSchemeProvider,
-        httpAuthSchemes: config2?.httpAuthSchemes ?? [
+        base64Decoder: config?.base64Decoder ?? util_base64_1.fromBase64,
+        base64Encoder: config?.base64Encoder ?? util_base64_1.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultSSOHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
             identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
@@ -17238,11 +17590,11 @@ var require_runtimeConfig_shared = __commonJS({
             signer: new core_2.NoAuthSigner()
           }
         ],
-        logger: config2?.logger ?? new smithy_client_1.NoOpLogger(),
-        serviceId: config2?.serviceId ?? "SSO",
-        urlParser: config2?.urlParser ?? url_parser_1.parseUrl,
-        utf8Decoder: config2?.utf8Decoder ?? util_utf8_1.fromUtf8,
-        utf8Encoder: config2?.utf8Encoder ?? util_utf8_1.toUtf8
+        logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        serviceId: config?.serviceId ?? "SSO",
+        urlParser: config?.urlParser ?? url_parser_1.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? util_utf8_1.toUtf8
       };
     };
     exports2.getRuntimeConfig = getRuntimeConfig5;
@@ -17379,36 +17731,36 @@ var require_runtimeConfig = __commonJS({
     var smithy_client_1 = require_dist_cjs26();
     var util_defaults_mode_node_1 = require_dist_cjs46();
     var smithy_client_2 = require_dist_cjs26();
-    var getRuntimeConfig5 = (config2) => {
+    var getRuntimeConfig5 = (config) => {
       (0, smithy_client_2.emitWarningIfUnsupportedVersion)(process.version);
-      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config2);
+      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
       const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
-      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config2);
+      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
       (0, core_1.emitWarningIfUnsupportedVersion)(process.version);
       const loaderConfig = {
-        profile: config2?.profile,
+        profile: config?.profile,
         logger: clientSharedValues.logger
       };
       return {
         ...clientSharedValues,
-        ...config2,
+        ...config,
         runtime: "node",
         defaultsMode,
-        authSchemePreference: config2?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
-        bodyLengthChecker: config2?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
-        defaultUserAgentProvider: config2?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
-        maxAttempts: config2?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config2),
-        region: config2?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: node_http_handler_1.NodeHttpHandler.create(config2?.requestHandler ?? defaultConfigProvider),
-        retryMode: config2?.retryMode ?? (0, node_config_provider_1.loadConfig)({
+        authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, node_config_provider_1.loadConfig)({
           ...middleware_retry_1.NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || util_retry_1.DEFAULT_RETRY_MODE
-        }, config2),
-        sha256: config2?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
-        streamCollector: config2?.streamCollector ?? node_http_handler_1.streamCollector,
-        useDualstackEndpoint: config2?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        useFipsEndpoint: config2?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        userAgentAppId: config2?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+        }, config),
+        sha256: config?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
       };
     };
     exports2.getRuntimeConfig = getRuntimeConfig5;
@@ -17605,11 +17957,11 @@ var require_dist_cjs48 = __commonJS({
         }
       };
     }, "getHttpAuthExtensionConfiguration");
-    var resolveHttpAuthRuntimeConfig3 = /* @__PURE__ */ __name((config2) => {
+    var resolveHttpAuthRuntimeConfig3 = /* @__PURE__ */ __name((config) => {
       return {
-        httpAuthSchemes: config2.httpAuthSchemes(),
-        httpAuthSchemeProvider: config2.httpAuthSchemeProvider(),
-        credentials: config2.credentials()
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
       };
     }, "resolveHttpAuthRuntimeConfig");
     var resolveRuntimeExtensions3 = /* @__PURE__ */ __name((runtimeConfig, extensions) => {
@@ -17658,8 +18010,8 @@ var require_dist_cjs48 = __commonJS({
         this.middlewareStack.use(
           (0, import_core17.getHttpAuthSchemeEndpointRuleSetPlugin)(this.config, {
             httpAuthSchemeParametersProvider: import_httpAuthSchemeProvider5.defaultSSOHttpAuthSchemeParametersProvider,
-            identityProviderConfigProvider: /* @__PURE__ */ __name(async (config2) => new import_core17.DefaultIdentityProviderConfig({
-              "aws.auth#sigv4": config2.credentials
+            identityProviderConfigProvider: /* @__PURE__ */ __name(async (config) => new import_core17.DefaultIdentityProviderConfig({
+              "aws.auth#sigv4": config.credentials
             }), "identityProviderConfigProvider")
           })
         );
@@ -17989,40 +18341,40 @@ var require_dist_cjs48 = __commonJS({
     var _rN = "roleName";
     var _rn = "role_name";
     var _xasbt = "x-amz-sso_bearer_token";
-    var GetRoleCredentialsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var GetRoleCredentialsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("SWBPortalService", "GetRoleCredentials", {}).n("SSOClient", "GetRoleCredentialsCommand").f(GetRoleCredentialsRequestFilterSensitiveLog, GetRoleCredentialsResponseFilterSensitiveLog).ser(se_GetRoleCredentialsCommand).de(de_GetRoleCredentialsCommand).build() {
       static {
         __name(this, "GetRoleCredentialsCommand");
       }
     };
-    var ListAccountRolesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ListAccountRolesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("SWBPortalService", "ListAccountRoles", {}).n("SSOClient", "ListAccountRolesCommand").f(ListAccountRolesRequestFilterSensitiveLog, void 0).ser(se_ListAccountRolesCommand).de(de_ListAccountRolesCommand).build() {
       static {
         __name(this, "ListAccountRolesCommand");
       }
     };
-    var ListAccountsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ListAccountsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("SWBPortalService", "ListAccounts", {}).n("SSOClient", "ListAccountsCommand").f(ListAccountsRequestFilterSensitiveLog, void 0).ser(se_ListAccountsCommand).de(de_ListAccountsCommand).build() {
       static {
         __name(this, "ListAccountsCommand");
       }
     };
-    var LogoutCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var LogoutCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("SWBPortalService", "Logout", {}).n("SSOClient", "LogoutCommand").f(LogoutRequestFilterSensitiveLog, void 0).ser(se_LogoutCommand).de(de_LogoutCommand).build() {
       static {
@@ -18054,9 +18406,9 @@ function createAwsAuthSigv4HttpAuthOption(authParameters) {
       name: "sso-oauth",
       region: authParameters.region
     },
-    propertiesExtractor: (config2, context) => ({
+    propertiesExtractor: (config, context) => ({
       signingProperties: {
-        config: config2,
+        config,
         context
       }
     })
@@ -18072,10 +18424,10 @@ var init_httpAuthSchemeProvider = __esm({
   "node_modules/@aws-sdk/nested-clients/dist-es/submodules/sso-oidc/auth/httpAuthSchemeProvider.js"() {
     init_dist_es2();
     import_util_middleware6 = __toESM(require_dist_cjs2());
-    defaultSSOOIDCHttpAuthSchemeParametersProvider = async (config2, context, input) => {
+    defaultSSOOIDCHttpAuthSchemeParametersProvider = async (config, context, input) => {
       return {
         operation: (0, import_util_middleware6.getSmithyContext)(context).operation,
-        region: await (0, import_util_middleware6.normalizeProvider)(config2.region)() || (() => {
+        region: await (0, import_util_middleware6.normalizeProvider)(config.region)() || (() => {
           throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
         })()
       };
@@ -18093,10 +18445,10 @@ var init_httpAuthSchemeProvider = __esm({
       }
       return options;
     };
-    resolveHttpAuthSchemeConfig = (config2) => {
-      const config_0 = resolveAwsSdkSigV4Config(config2);
+    resolveHttpAuthSchemeConfig = (config) => {
+      const config_0 = resolveAwsSdkSigV4Config(config);
       return Object.assign(config_0, {
-        authSchemePreference: (0, import_util_middleware6.normalizeProvider)(config2.authSchemePreference ?? [])
+        authSchemePreference: (0, import_util_middleware6.normalizeProvider)(config.authSchemePreference ?? [])
       });
     };
   }
@@ -18310,16 +18662,16 @@ var init_runtimeConfig_shared = __esm({
     import_util_utf84 = __toESM(require_dist_cjs12());
     init_httpAuthSchemeProvider();
     init_endpointResolver();
-    getRuntimeConfig = (config2) => {
+    getRuntimeConfig = (config) => {
       return {
         apiVersion: "2019-06-10",
-        base64Decoder: config2?.base64Decoder ?? import_util_base646.fromBase64,
-        base64Encoder: config2?.base64Encoder ?? import_util_base646.toBase64,
-        disableHostPrefix: config2?.disableHostPrefix ?? false,
-        endpointProvider: config2?.endpointProvider ?? defaultEndpointResolver,
-        extensions: config2?.extensions ?? [],
-        httpAuthSchemeProvider: config2?.httpAuthSchemeProvider ?? defaultSSOOIDCHttpAuthSchemeProvider,
-        httpAuthSchemes: config2?.httpAuthSchemes ?? [
+        base64Decoder: config?.base64Decoder ?? import_util_base646.fromBase64,
+        base64Encoder: config?.base64Encoder ?? import_util_base646.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? defaultSSOOIDCHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
             identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
@@ -18331,11 +18683,11 @@ var init_runtimeConfig_shared = __esm({
             signer: new NoAuthSigner()
           }
         ],
-        logger: config2?.logger ?? new import_smithy_client7.NoOpLogger(),
-        serviceId: config2?.serviceId ?? "SSO OIDC",
-        urlParser: config2?.urlParser ?? import_url_parser.parseUrl,
-        utf8Decoder: config2?.utf8Decoder ?? import_util_utf84.fromUtf8,
-        utf8Encoder: config2?.utf8Encoder ?? import_util_utf84.toUtf8
+        logger: config?.logger ?? new import_smithy_client7.NoOpLogger(),
+        serviceId: config?.serviceId ?? "SSO OIDC",
+        urlParser: config?.urlParser ?? import_url_parser.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? import_util_utf84.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? import_util_utf84.toUtf8
       };
     };
   }
@@ -18359,36 +18711,36 @@ var init_runtimeConfig = __esm({
     import_smithy_client8 = __toESM(require_dist_cjs26());
     import_util_defaults_mode_node = __toESM(require_dist_cjs46());
     import_smithy_client9 = __toESM(require_dist_cjs26());
-    getRuntimeConfig2 = (config2) => {
+    getRuntimeConfig2 = (config) => {
       (0, import_smithy_client9.emitWarningIfUnsupportedVersion)(process.version);
-      const defaultsMode = (0, import_util_defaults_mode_node.resolveDefaultsModeConfig)(config2);
+      const defaultsMode = (0, import_util_defaults_mode_node.resolveDefaultsModeConfig)(config);
       const defaultConfigProvider = () => defaultsMode().then(import_smithy_client8.loadConfigsForDefaultMode);
-      const clientSharedValues = getRuntimeConfig(config2);
+      const clientSharedValues = getRuntimeConfig(config);
       emitWarningIfUnsupportedVersion(process.version);
       const loaderConfig = {
-        profile: config2?.profile,
+        profile: config?.profile,
         logger: clientSharedValues.logger
       };
       return {
         ...clientSharedValues,
-        ...config2,
+        ...config,
         runtime: "node",
         defaultsMode,
-        authSchemePreference: config2?.authSchemePreference ?? (0, import_node_config_provider.loadConfig)(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
-        bodyLengthChecker: config2?.bodyLengthChecker ?? import_util_body_length_node.calculateBodyLength,
-        defaultUserAgentProvider: config2?.defaultUserAgentProvider ?? (0, import_util_user_agent_node.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
-        maxAttempts: config2?.maxAttempts ?? (0, import_node_config_provider.loadConfig)(import_middleware_retry.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config2),
-        region: config2?.region ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_REGION_CONFIG_OPTIONS, { ...import_config_resolver.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: import_node_http_handler.NodeHttpHandler.create(config2?.requestHandler ?? defaultConfigProvider),
-        retryMode: config2?.retryMode ?? (0, import_node_config_provider.loadConfig)({
+        authSchemePreference: config?.authSchemePreference ?? (0, import_node_config_provider.loadConfig)(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? import_util_body_length_node.calculateBodyLength,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, import_util_user_agent_node.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
+        maxAttempts: config?.maxAttempts ?? (0, import_node_config_provider.loadConfig)(import_middleware_retry.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_REGION_CONFIG_OPTIONS, { ...import_config_resolver.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: import_node_http_handler.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, import_node_config_provider.loadConfig)({
           ...import_middleware_retry.NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || import_util_retry.DEFAULT_RETRY_MODE
-        }, config2),
-        sha256: config2?.sha256 ?? import_hash_node.Hash.bind(null, "sha256"),
-        streamCollector: config2?.streamCollector ?? import_node_http_handler.streamCollector,
-        useDualstackEndpoint: config2?.useDualstackEndpoint ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        useFipsEndpoint: config2?.useFipsEndpoint ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        userAgentAppId: config2?.userAgentAppId ?? (0, import_node_config_provider.loadConfig)(import_util_user_agent_node.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+        }, config),
+        sha256: config?.sha256 ?? import_hash_node.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? import_node_http_handler.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, import_node_config_provider.loadConfig)(import_config_resolver.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, import_node_config_provider.loadConfig)(import_util_user_agent_node.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
       };
     };
   }
@@ -18428,11 +18780,11 @@ var init_httpAuthExtensionConfiguration = __esm({
         }
       };
     };
-    resolveHttpAuthRuntimeConfig = (config2) => {
+    resolveHttpAuthRuntimeConfig = (config) => {
       return {
-        httpAuthSchemes: config2.httpAuthSchemes(),
-        httpAuthSchemeProvider: config2.httpAuthSchemeProvider(),
-        credentials: config2.credentials()
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
       };
     };
   }
@@ -18495,8 +18847,8 @@ var init_SSOOIDCClient = __esm({
         this.middlewareStack.use((0, import_middleware_recursion_detection.getRecursionDetectionPlugin)(this.config));
         this.middlewareStack.use(getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
           httpAuthSchemeParametersProvider: defaultSSOOIDCHttpAuthSchemeParametersProvider,
-          identityProviderConfigProvider: async (config2) => new DefaultIdentityProviderConfig({
-            "aws.auth#sigv4": config2.credentials
+          identityProviderConfigProvider: async (config) => new DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials
           })
         }));
         this.middlewareStack.use(getHttpSigningPlugin(this.config));
@@ -18990,10 +19342,10 @@ var init_CreateTokenCommand = __esm({
     init_EndpointParameters();
     init_models_0();
     init_Aws_restJson1();
-    CreateTokenCommand = class extends import_smithy_client15.Command.classBuilder().ep(commonParams).m(function(Command, cs, config2, o3) {
+    CreateTokenCommand = class extends import_smithy_client15.Command.classBuilder().ep(commonParams).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde2.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint2.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde2.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint2.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("AWSSSOOIDCService", "CreateToken", {}).n("SSOOIDCClient", "CreateTokenCommand").f(CreateTokenRequestFilterSensitiveLog, CreateTokenResponseFilterSensitiveLog).ser(se_CreateTokenCommand).de(de_CreateTokenCommand).build() {
     };
@@ -19159,8 +19511,8 @@ var require_dist_cjs49 = __commonJS({
     var import_shared_ini_file_loader = require_dist_cjs35();
     var import_fs = require("fs");
     var { writeFile } = import_fs.promises;
-    var writeSSOTokenToFile = /* @__PURE__ */ __name((id2, ssoToken) => {
-      const tokenFilepath = (0, import_shared_ini_file_loader.getSSOTokenFilepath)(id2);
+    var writeSSOTokenToFile = /* @__PURE__ */ __name((id, ssoToken) => {
+      const tokenFilepath = (0, import_shared_ini_file_loader.getSSOTokenFilepath)(id);
       const tokenString = JSON.stringify(ssoToken, null, 2);
       return writeFile(tokenFilepath, tokenString);
     }, "writeSSOTokenToFile");
@@ -19502,9 +19854,9 @@ function createAwsAuthSigv4HttpAuthOption2(authParameters) {
       name: "sts",
       region: authParameters.region
     },
-    propertiesExtractor: (config2, context) => ({
+    propertiesExtractor: (config, context) => ({
       signingProperties: {
-        config: config2,
+        config,
         context
       }
     })
@@ -19521,10 +19873,10 @@ var init_httpAuthSchemeProvider2 = __esm({
     init_dist_es2();
     import_util_middleware7 = __toESM(require_dist_cjs2());
     init_STSClient();
-    defaultSTSHttpAuthSchemeParametersProvider = async (config2, context, input) => {
+    defaultSTSHttpAuthSchemeParametersProvider = async (config, context, input) => {
       return {
         operation: (0, import_util_middleware7.getSmithyContext)(context).operation,
-        region: await (0, import_util_middleware7.normalizeProvider)(config2.region)() || (() => {
+        region: await (0, import_util_middleware7.normalizeProvider)(config.region)() || (() => {
           throw new Error("expected `region` to be configured for `aws.auth#sigv4`");
         })()
       };
@@ -19545,11 +19897,11 @@ var init_httpAuthSchemeProvider2 = __esm({
     resolveStsAuthConfig = (input) => Object.assign(input, {
       stsClientCtor: STSClient
     });
-    resolveHttpAuthSchemeConfig2 = (config2) => {
-      const config_0 = resolveStsAuthConfig(config2);
+    resolveHttpAuthSchemeConfig2 = (config) => {
+      const config_0 = resolveStsAuthConfig(config);
       const config_1 = resolveAwsSdkSigV4Config(config_0);
       return Object.assign(config_1, {
-        authSchemePreference: (0, import_util_middleware7.normalizeProvider)(config2.authSchemePreference ?? [])
+        authSchemePreference: (0, import_util_middleware7.normalizeProvider)(config.authSchemePreference ?? [])
       });
     };
   }
@@ -19655,16 +20007,16 @@ var init_runtimeConfig_shared2 = __esm({
     import_util_utf85 = __toESM(require_dist_cjs12());
     init_httpAuthSchemeProvider2();
     init_endpointResolver2();
-    getRuntimeConfig3 = (config2) => {
+    getRuntimeConfig3 = (config) => {
       return {
         apiVersion: "2011-06-15",
-        base64Decoder: config2?.base64Decoder ?? import_util_base647.fromBase64,
-        base64Encoder: config2?.base64Encoder ?? import_util_base647.toBase64,
-        disableHostPrefix: config2?.disableHostPrefix ?? false,
-        endpointProvider: config2?.endpointProvider ?? defaultEndpointResolver2,
-        extensions: config2?.extensions ?? [],
-        httpAuthSchemeProvider: config2?.httpAuthSchemeProvider ?? defaultSTSHttpAuthSchemeProvider,
-        httpAuthSchemes: config2?.httpAuthSchemes ?? [
+        base64Decoder: config?.base64Decoder ?? import_util_base647.fromBase64,
+        base64Encoder: config?.base64Encoder ?? import_util_base647.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? defaultEndpointResolver2,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? defaultSTSHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
             identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
@@ -19676,11 +20028,11 @@ var init_runtimeConfig_shared2 = __esm({
             signer: new NoAuthSigner()
           }
         ],
-        logger: config2?.logger ?? new import_smithy_client17.NoOpLogger(),
-        serviceId: config2?.serviceId ?? "STS",
-        urlParser: config2?.urlParser ?? import_url_parser2.parseUrl,
-        utf8Decoder: config2?.utf8Decoder ?? import_util_utf85.fromUtf8,
-        utf8Encoder: config2?.utf8Encoder ?? import_util_utf85.toUtf8
+        logger: config?.logger ?? new import_smithy_client17.NoOpLogger(),
+        serviceId: config?.serviceId ?? "STS",
+        urlParser: config?.urlParser ?? import_url_parser2.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? import_util_utf85.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? import_util_utf85.toUtf8
       };
     };
   }
@@ -19705,28 +20057,28 @@ var init_runtimeConfig2 = __esm({
     import_smithy_client18 = __toESM(require_dist_cjs26());
     import_util_defaults_mode_node2 = __toESM(require_dist_cjs46());
     import_smithy_client19 = __toESM(require_dist_cjs26());
-    getRuntimeConfig4 = (config2) => {
+    getRuntimeConfig4 = (config) => {
       (0, import_smithy_client19.emitWarningIfUnsupportedVersion)(process.version);
-      const defaultsMode = (0, import_util_defaults_mode_node2.resolveDefaultsModeConfig)(config2);
+      const defaultsMode = (0, import_util_defaults_mode_node2.resolveDefaultsModeConfig)(config);
       const defaultConfigProvider = () => defaultsMode().then(import_smithy_client18.loadConfigsForDefaultMode);
-      const clientSharedValues = getRuntimeConfig3(config2);
+      const clientSharedValues = getRuntimeConfig3(config);
       emitWarningIfUnsupportedVersion(process.version);
       const loaderConfig = {
-        profile: config2?.profile,
+        profile: config?.profile,
         logger: clientSharedValues.logger
       };
       return {
         ...clientSharedValues,
-        ...config2,
+        ...config,
         runtime: "node",
         defaultsMode,
-        authSchemePreference: config2?.authSchemePreference ?? (0, import_node_config_provider2.loadConfig)(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
-        bodyLengthChecker: config2?.bodyLengthChecker ?? import_util_body_length_node2.calculateBodyLength,
-        defaultUserAgentProvider: config2?.defaultUserAgentProvider ?? (0, import_util_user_agent_node2.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
-        httpAuthSchemes: config2?.httpAuthSchemes ?? [
+        authSchemePreference: config?.authSchemePreference ?? (0, import_node_config_provider2.loadConfig)(NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? import_util_body_length_node2.calculateBodyLength,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, import_util_user_agent_node2.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_default.version }),
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
-            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await config2.credentialDefaultProvider(idProps?.__config || {})()),
+            identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4") || (async (idProps) => await config.credentialDefaultProvider(idProps?.__config || {})()),
             signer: new AwsSdkSigV4Signer()
           },
           {
@@ -19735,18 +20087,18 @@ var init_runtimeConfig2 = __esm({
             signer: new NoAuthSigner()
           }
         ],
-        maxAttempts: config2?.maxAttempts ?? (0, import_node_config_provider2.loadConfig)(import_middleware_retry3.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config2),
-        region: config2?.region ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_REGION_CONFIG_OPTIONS, { ...import_config_resolver3.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: import_node_http_handler2.NodeHttpHandler.create(config2?.requestHandler ?? defaultConfigProvider),
-        retryMode: config2?.retryMode ?? (0, import_node_config_provider2.loadConfig)({
+        maxAttempts: config?.maxAttempts ?? (0, import_node_config_provider2.loadConfig)(import_middleware_retry3.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_REGION_CONFIG_OPTIONS, { ...import_config_resolver3.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: import_node_http_handler2.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, import_node_config_provider2.loadConfig)({
           ...import_middleware_retry3.NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || import_util_retry2.DEFAULT_RETRY_MODE
-        }, config2),
-        sha256: config2?.sha256 ?? import_hash_node2.Hash.bind(null, "sha256"),
-        streamCollector: config2?.streamCollector ?? import_node_http_handler2.streamCollector,
-        useDualstackEndpoint: config2?.useDualstackEndpoint ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        useFipsEndpoint: config2?.useFipsEndpoint ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        userAgentAppId: config2?.userAgentAppId ?? (0, import_node_config_provider2.loadConfig)(import_util_user_agent_node2.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+        }, config),
+        sha256: config?.sha256 ?? import_hash_node2.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? import_node_http_handler2.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, import_node_config_provider2.loadConfig)(import_config_resolver3.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, import_node_config_provider2.loadConfig)(import_util_user_agent_node2.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
       };
     };
   }
@@ -19786,11 +20138,11 @@ var init_httpAuthExtensionConfiguration2 = __esm({
         }
       };
     };
-    resolveHttpAuthRuntimeConfig2 = (config2) => {
+    resolveHttpAuthRuntimeConfig2 = (config) => {
       return {
-        httpAuthSchemes: config2.httpAuthSchemes(),
-        httpAuthSchemeProvider: config2.httpAuthSchemeProvider(),
-        credentials: config2.credentials()
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
       };
     };
   }
@@ -19853,8 +20205,8 @@ var init_STSClient = __esm({
         this.middlewareStack.use((0, import_middleware_recursion_detection2.getRecursionDetectionPlugin)(this.config));
         this.middlewareStack.use(getHttpAuthSchemeEndpointRuleSetPlugin(this.config, {
           httpAuthSchemeParametersProvider: defaultSTSHttpAuthSchemeParametersProvider,
-          identityProviderConfigProvider: async (config2) => new DefaultIdentityProviderConfig({
-            "aws.auth#sigv4": config2.credentials
+          identityProviderConfigProvider: async (config) => new DefaultIdentityProviderConfig({
+            "aws.auth#sigv4": config.credentials
           })
         }));
         this.middlewareStack.use(getHttpSigningPlugin(this.config));
@@ -20531,10 +20883,10 @@ var init_AssumeRoleCommand = __esm({
     init_EndpointParameters2();
     init_models_02();
     init_Aws_query();
-    AssumeRoleCommand = class extends import_smithy_client25.Command.classBuilder().ep(commonParams2).m(function(Command, cs, config2, o3) {
+    AssumeRoleCommand = class extends import_smithy_client25.Command.classBuilder().ep(commonParams2).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde3.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint4.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde3.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint4.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRole", {}).n("STSClient", "AssumeRoleCommand").f(void 0, AssumeRoleResponseFilterSensitiveLog).ser(se_AssumeRoleCommand).de(de_AssumeRoleCommand).build() {
     };
@@ -20551,10 +20903,10 @@ var init_AssumeRoleWithWebIdentityCommand = __esm({
     init_EndpointParameters2();
     init_models_02();
     init_Aws_query();
-    AssumeRoleWithWebIdentityCommand = class extends import_smithy_client26.Command.classBuilder().ep(commonParams2).m(function(Command, cs, config2, o3) {
+    AssumeRoleWithWebIdentityCommand = class extends import_smithy_client26.Command.classBuilder().ep(commonParams2).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde4.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint5.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde4.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint5.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("AWSSecurityTokenServiceV20110615", "AssumeRoleWithWebIdentity", {}).n("STSClient", "AssumeRoleWithWebIdentityCommand").f(AssumeRoleWithWebIdentityRequestFilterSensitiveLog, AssumeRoleWithWebIdentityResponseFilterSensitiveLog).ser(se_AssumeRoleWithWebIdentityCommand).de(de_AssumeRoleWithWebIdentityCommand).build() {
     };
@@ -20702,8 +21054,8 @@ var init_defaultRoleAssumers = __esm({
         return baseCtor;
       else
         return class CustomizableSTSClient extends baseCtor {
-          constructor(config2) {
-            super(config2);
+          constructor(config) {
+            super(config);
             for (const customization of customizations) {
               this.middlewareStack.use(customization);
             }
@@ -21480,27 +21832,27 @@ var require_runtimeConfig_shared2 = __commonJS({
     var util_utf8_1 = require_dist_cjs12();
     var httpAuthSchemeProvider_1 = require_httpAuthSchemeProvider();
     var endpointResolver_1 = require_endpointResolver2();
-    var getRuntimeConfig5 = (config2) => {
+    var getRuntimeConfig5 = (config) => {
       return {
         apiVersion: "2012-08-10",
-        base64Decoder: config2?.base64Decoder ?? util_base64_1.fromBase64,
-        base64Encoder: config2?.base64Encoder ?? util_base64_1.toBase64,
-        disableHostPrefix: config2?.disableHostPrefix ?? false,
-        endpointProvider: config2?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
-        extensions: config2?.extensions ?? [],
-        httpAuthSchemeProvider: config2?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultDynamoDBHttpAuthSchemeProvider,
-        httpAuthSchemes: config2?.httpAuthSchemes ?? [
+        base64Decoder: config?.base64Decoder ?? util_base64_1.fromBase64,
+        base64Encoder: config?.base64Encoder ?? util_base64_1.toBase64,
+        disableHostPrefix: config?.disableHostPrefix ?? false,
+        endpointProvider: config?.endpointProvider ?? endpointResolver_1.defaultEndpointResolver,
+        extensions: config?.extensions ?? [],
+        httpAuthSchemeProvider: config?.httpAuthSchemeProvider ?? httpAuthSchemeProvider_1.defaultDynamoDBHttpAuthSchemeProvider,
+        httpAuthSchemes: config?.httpAuthSchemes ?? [
           {
             schemeId: "aws.auth#sigv4",
             identityProvider: (ipc) => ipc.getIdentityProvider("aws.auth#sigv4"),
             signer: new core_1.AwsSdkSigV4Signer()
           }
         ],
-        logger: config2?.logger ?? new smithy_client_1.NoOpLogger(),
-        serviceId: config2?.serviceId ?? "DynamoDB",
-        urlParser: config2?.urlParser ?? url_parser_1.parseUrl,
-        utf8Decoder: config2?.utf8Decoder ?? util_utf8_1.fromUtf8,
-        utf8Encoder: config2?.utf8Encoder ?? util_utf8_1.toUtf8
+        logger: config?.logger ?? new smithy_client_1.NoOpLogger(),
+        serviceId: config?.serviceId ?? "DynamoDB",
+        urlParser: config?.urlParser ?? url_parser_1.parseUrl,
+        utf8Decoder: config?.utf8Decoder ?? util_utf8_1.fromUtf8,
+        utf8Encoder: config?.utf8Encoder ?? util_utf8_1.toUtf8
       };
     };
     exports2.getRuntimeConfig = getRuntimeConfig5;
@@ -21531,39 +21883,39 @@ var require_runtimeConfig2 = __commonJS({
     var smithy_client_1 = require_dist_cjs26();
     var util_defaults_mode_node_1 = require_dist_cjs46();
     var smithy_client_2 = require_dist_cjs26();
-    var getRuntimeConfig5 = (config2) => {
+    var getRuntimeConfig5 = (config) => {
       (0, smithy_client_2.emitWarningIfUnsupportedVersion)(process.version);
-      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config2);
+      const defaultsMode = (0, util_defaults_mode_node_1.resolveDefaultsModeConfig)(config);
       const defaultConfigProvider = () => defaultsMode().then(smithy_client_1.loadConfigsForDefaultMode);
-      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config2);
+      const clientSharedValues = (0, runtimeConfig_shared_1.getRuntimeConfig)(config);
       (0, core_1.emitWarningIfUnsupportedVersion)(process.version);
       const loaderConfig = {
-        profile: config2?.profile,
+        profile: config?.profile,
         logger: clientSharedValues.logger
       };
       return {
         ...clientSharedValues,
-        ...config2,
+        ...config,
         runtime: "node",
         defaultsMode,
-        accountIdEndpointMode: config2?.accountIdEndpointMode ?? (0, node_config_provider_1.loadConfig)(account_id_endpoint_1.NODE_ACCOUNT_ID_ENDPOINT_MODE_CONFIG_OPTIONS, loaderConfig),
-        authSchemePreference: config2?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
-        bodyLengthChecker: config2?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
-        credentialDefaultProvider: config2?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
-        defaultUserAgentProvider: config2?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
-        endpointDiscoveryEnabledProvider: config2?.endpointDiscoveryEnabledProvider ?? (0, node_config_provider_1.loadConfig)(middleware_endpoint_discovery_1.NODE_ENDPOINT_DISCOVERY_CONFIG_OPTIONS, loaderConfig),
-        maxAttempts: config2?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config2),
-        region: config2?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
-        requestHandler: node_http_handler_1.NodeHttpHandler.create(config2?.requestHandler ?? defaultConfigProvider),
-        retryMode: config2?.retryMode ?? (0, node_config_provider_1.loadConfig)({
+        accountIdEndpointMode: config?.accountIdEndpointMode ?? (0, node_config_provider_1.loadConfig)(account_id_endpoint_1.NODE_ACCOUNT_ID_ENDPOINT_MODE_CONFIG_OPTIONS, loaderConfig),
+        authSchemePreference: config?.authSchemePreference ?? (0, node_config_provider_1.loadConfig)(core_1.NODE_AUTH_SCHEME_PREFERENCE_OPTIONS, loaderConfig),
+        bodyLengthChecker: config?.bodyLengthChecker ?? util_body_length_node_1.calculateBodyLength,
+        credentialDefaultProvider: config?.credentialDefaultProvider ?? credential_provider_node_1.defaultProvider,
+        defaultUserAgentProvider: config?.defaultUserAgentProvider ?? (0, util_user_agent_node_1.createDefaultUserAgentProvider)({ serviceId: clientSharedValues.serviceId, clientVersion: package_json_1.default.version }),
+        endpointDiscoveryEnabledProvider: config?.endpointDiscoveryEnabledProvider ?? (0, node_config_provider_1.loadConfig)(middleware_endpoint_discovery_1.NODE_ENDPOINT_DISCOVERY_CONFIG_OPTIONS, loaderConfig),
+        maxAttempts: config?.maxAttempts ?? (0, node_config_provider_1.loadConfig)(middleware_retry_1.NODE_MAX_ATTEMPT_CONFIG_OPTIONS, config),
+        region: config?.region ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_REGION_CONFIG_OPTIONS, { ...config_resolver_1.NODE_REGION_CONFIG_FILE_OPTIONS, ...loaderConfig }),
+        requestHandler: node_http_handler_1.NodeHttpHandler.create(config?.requestHandler ?? defaultConfigProvider),
+        retryMode: config?.retryMode ?? (0, node_config_provider_1.loadConfig)({
           ...middleware_retry_1.NODE_RETRY_MODE_CONFIG_OPTIONS,
           default: async () => (await defaultConfigProvider()).retryMode || util_retry_1.DEFAULT_RETRY_MODE
-        }, config2),
-        sha256: config2?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
-        streamCollector: config2?.streamCollector ?? node_http_handler_1.streamCollector,
-        useDualstackEndpoint: config2?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        useFipsEndpoint: config2?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
-        userAgentAppId: config2?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
+        }, config),
+        sha256: config?.sha256 ?? hash_node_1.Hash.bind(null, "sha256"),
+        streamCollector: config?.streamCollector ?? node_http_handler_1.streamCollector,
+        useDualstackEndpoint: config?.useDualstackEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_DUALSTACK_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        useFipsEndpoint: config?.useFipsEndpoint ?? (0, node_config_provider_1.loadConfig)(config_resolver_1.NODE_USE_FIPS_ENDPOINT_CONFIG_OPTIONS, loaderConfig),
+        userAgentAppId: config?.userAgentAppId ?? (0, node_config_provider_1.loadConfig)(util_user_agent_node_1.NODE_APP_ID_CONFIG_OPTIONS, loaderConfig)
       };
     };
     exports2.getRuntimeConfig = getRuntimeConfig5;
@@ -21965,7 +22317,7 @@ var require_dist_cjs56 = __commonJS({
     };
     var import_core17 = (init_dist_es2(), __toCommonJS(dist_es_exports2));
     var import_protocol_http15 = require_dist_cjs3();
-    var import_uuid = (init_esm_node(), __toCommonJS(esm_node_exports));
+    var import_uuid2 = (init_esm_node2(), __toCommonJS(esm_node_exports2));
     var import_smithy_client28 = require_dist_cjs26();
     var DynamoDBServiceException = class _DynamoDBServiceException extends import_smithy_client28.ServiceException {
       static {
@@ -24532,7 +24884,7 @@ var require_dist_cjs56 = __commonJS({
     }, "se_ExecuteStatementInput");
     var se_ExecuteTransactionInput = /* @__PURE__ */ __name((input, context) => {
       return (0, import_smithy_client28.take)(input, {
-        ClientRequestToken: [true, (_2) => _2 ?? (0, import_uuid.v4)()],
+        ClientRequestToken: [true, (_2) => _2 ?? (0, import_uuid2.v4)()],
         ReturnConsumedCapacity: [],
         TransactStatements: /* @__PURE__ */ __name((_2) => se_ParameterizedStatements(_2, context), "TransactStatements")
       });
@@ -24556,7 +24908,7 @@ var require_dist_cjs56 = __commonJS({
     }, "se_ExpectedAttributeValue");
     var se_ExportTableToPointInTimeInput = /* @__PURE__ */ __name((input, context) => {
       return (0, import_smithy_client28.take)(input, {
-        ClientToken: [true, (_2) => _2 ?? (0, import_uuid.v4)()],
+        ClientToken: [true, (_2) => _2 ?? (0, import_uuid2.v4)()],
         ExportFormat: [],
         ExportTime: /* @__PURE__ */ __name((_2) => _2.getTime() / 1e3, "ExportTime"),
         ExportType: [],
@@ -24631,7 +24983,7 @@ var require_dist_cjs56 = __commonJS({
     }, "se_GlobalTableGlobalSecondaryIndexSettingsUpdateList");
     var se_ImportTableInput = /* @__PURE__ */ __name((input, context) => {
       return (0, import_smithy_client28.take)(input, {
-        ClientToken: [true, (_2) => _2 ?? (0, import_uuid.v4)()],
+        ClientToken: [true, (_2) => _2 ?? (0, import_uuid2.v4)()],
         InputCompressionType: [],
         InputFormat: [],
         InputFormatOptions: import_smithy_client28._json,
@@ -24899,7 +25251,7 @@ var require_dist_cjs56 = __commonJS({
     }, "se_TransactWriteItemList");
     var se_TransactWriteItemsInput = /* @__PURE__ */ __name((input, context) => {
       return (0, import_smithy_client28.take)(input, {
-        ClientRequestToken: [true, (_2) => _2 ?? (0, import_uuid.v4)()],
+        ClientRequestToken: [true, (_2) => _2 ?? (0, import_uuid2.v4)()],
         ReturnConsumedCapacity: [],
         ReturnItemCollectionMetrics: [],
         TransactItems: /* @__PURE__ */ __name((_2) => se_TransactWriteItemList(_2, context), "TransactItems")
@@ -25884,10 +26236,10 @@ var require_dist_cjs56 = __commonJS({
       };
     }
     __name(sharedHeaders, "sharedHeaders");
-    var DescribeEndpointsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var DescribeEndpointsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeEndpoints", {}).n("DynamoDBClient", "DescribeEndpointsCommand").f(void 0, void 0).ser(se_DescribeEndpointsCommand).de(de_DescribeEndpointsCommand).build() {
       static {
@@ -25926,11 +26278,11 @@ var require_dist_cjs56 = __commonJS({
         }
       };
     }, "getHttpAuthExtensionConfiguration");
-    var resolveHttpAuthRuntimeConfig3 = /* @__PURE__ */ __name((config2) => {
+    var resolveHttpAuthRuntimeConfig3 = /* @__PURE__ */ __name((config) => {
       return {
-        httpAuthSchemes: config2.httpAuthSchemes(),
-        httpAuthSchemeProvider: config2.httpAuthSchemeProvider(),
-        credentials: config2.credentials()
+        httpAuthSchemes: config.httpAuthSchemes(),
+        httpAuthSchemeProvider: config.httpAuthSchemeProvider(),
+        credentials: config.credentials()
       };
     }, "resolveHttpAuthRuntimeConfig");
     var resolveRuntimeExtensions3 = /* @__PURE__ */ __name((runtimeConfig, extensions) => {
@@ -25983,8 +26335,8 @@ var require_dist_cjs56 = __commonJS({
         this.middlewareStack.use(
           (0, import_core22.getHttpAuthSchemeEndpointRuleSetPlugin)(this.config, {
             httpAuthSchemeParametersProvider: import_httpAuthSchemeProvider5.defaultDynamoDBHttpAuthSchemeParametersProvider,
-            identityProviderConfigProvider: /* @__PURE__ */ __name(async (config2) => new import_core22.DefaultIdentityProviderConfig({
-              "aws.auth#sigv4": config2.credentials
+            identityProviderConfigProvider: /* @__PURE__ */ __name(async (config) => new import_core22.DefaultIdentityProviderConfig({
+              "aws.auth#sigv4": config.credentials
             }), "identityProviderConfigProvider")
           })
         );
@@ -25999,10 +26351,10 @@ var require_dist_cjs56 = __commonJS({
         super.destroy();
       }
     };
-    var BatchExecuteStatementCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var BatchExecuteStatementCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "BatchExecuteStatement", {}).n("DynamoDBClient", "BatchExecuteStatementCommand").f(void 0, void 0).ser(se_BatchExecuteStatementCommand).de(de_BatchExecuteStatementCommand).build() {
       static {
@@ -26012,10 +26364,10 @@ var require_dist_cjs56 = __commonJS({
     var BatchGetItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArnList: { type: "operationContextParams", get: /* @__PURE__ */ __name((input) => Object.keys(input?.RequestItems ?? {}), "get") }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "BatchGetItem", {}).n("DynamoDBClient", "BatchGetItemCommand").f(void 0, void 0).ser(se_BatchGetItemCommand).de(de_BatchGetItemCommand).build() {
       static {
@@ -26025,10 +26377,10 @@ var require_dist_cjs56 = __commonJS({
     var BatchWriteItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArnList: { type: "operationContextParams", get: /* @__PURE__ */ __name((input) => Object.keys(input?.RequestItems ?? {}), "get") }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "BatchWriteItem", {}).n("DynamoDBClient", "BatchWriteItemCommand").f(void 0, void 0).ser(se_BatchWriteItemCommand).de(de_BatchWriteItemCommand).build() {
       static {
@@ -26038,10 +26390,10 @@ var require_dist_cjs56 = __commonJS({
     var CreateBackupCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "CreateBackup", {}).n("DynamoDBClient", "CreateBackupCommand").f(void 0, void 0).ser(se_CreateBackupCommand).de(de_CreateBackupCommand).build() {
       static {
@@ -26051,10 +26403,10 @@ var require_dist_cjs56 = __commonJS({
     var CreateGlobalTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "GlobalTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "CreateGlobalTable", {}).n("DynamoDBClient", "CreateGlobalTableCommand").f(void 0, void 0).ser(se_CreateGlobalTableCommand).de(de_CreateGlobalTableCommand).build() {
       static {
@@ -26064,10 +26416,10 @@ var require_dist_cjs56 = __commonJS({
     var CreateTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "CreateTable", {}).n("DynamoDBClient", "CreateTableCommand").f(void 0, void 0).ser(se_CreateTableCommand).de(de_CreateTableCommand).build() {
       static {
@@ -26077,10 +26429,10 @@ var require_dist_cjs56 = __commonJS({
     var DeleteBackupCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "BackupArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DeleteBackup", {}).n("DynamoDBClient", "DeleteBackupCommand").f(void 0, void 0).ser(se_DeleteBackupCommand).de(de_DeleteBackupCommand).build() {
       static {
@@ -26090,10 +26442,10 @@ var require_dist_cjs56 = __commonJS({
     var DeleteItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DeleteItem", {}).n("DynamoDBClient", "DeleteItemCommand").f(void 0, void 0).ser(se_DeleteItemCommand).de(de_DeleteItemCommand).build() {
       static {
@@ -26103,10 +26455,10 @@ var require_dist_cjs56 = __commonJS({
     var DeleteResourcePolicyCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DeleteResourcePolicy", {}).n("DynamoDBClient", "DeleteResourcePolicyCommand").f(void 0, void 0).ser(se_DeleteResourcePolicyCommand).de(de_DeleteResourcePolicyCommand).build() {
       static {
@@ -26116,10 +26468,10 @@ var require_dist_cjs56 = __commonJS({
     var DeleteTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DeleteTable", {}).n("DynamoDBClient", "DeleteTableCommand").f(void 0, void 0).ser(se_DeleteTableCommand).de(de_DeleteTableCommand).build() {
       static {
@@ -26129,10 +26481,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeBackupCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "BackupArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeBackup", {}).n("DynamoDBClient", "DescribeBackupCommand").f(void 0, void 0).ser(se_DescribeBackupCommand).de(de_DescribeBackupCommand).build() {
       static {
@@ -26142,10 +26494,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeContinuousBackupsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeContinuousBackups", {}).n("DynamoDBClient", "DescribeContinuousBackupsCommand").f(void 0, void 0).ser(se_DescribeContinuousBackupsCommand).de(de_DescribeContinuousBackupsCommand).build() {
       static {
@@ -26155,10 +26507,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeContributorInsightsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeContributorInsights", {}).n("DynamoDBClient", "DescribeContributorInsightsCommand").f(void 0, void 0).ser(se_DescribeContributorInsightsCommand).de(de_DescribeContributorInsightsCommand).build() {
       static {
@@ -26168,10 +26520,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeExportCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ExportArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeExport", {}).n("DynamoDBClient", "DescribeExportCommand").f(void 0, void 0).ser(se_DescribeExportCommand).de(de_DescribeExportCommand).build() {
       static {
@@ -26181,10 +26533,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeGlobalTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "GlobalTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeGlobalTable", {}).n("DynamoDBClient", "DescribeGlobalTableCommand").f(void 0, void 0).ser(se_DescribeGlobalTableCommand).de(de_DescribeGlobalTableCommand).build() {
       static {
@@ -26194,10 +26546,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeGlobalTableSettingsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "GlobalTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeGlobalTableSettings", {}).n("DynamoDBClient", "DescribeGlobalTableSettingsCommand").f(void 0, void 0).ser(se_DescribeGlobalTableSettingsCommand).de(de_DescribeGlobalTableSettingsCommand).build() {
       static {
@@ -26207,10 +26559,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeImportCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ImportArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeImport", {}).n("DynamoDBClient", "DescribeImportCommand").f(void 0, void 0).ser(se_DescribeImportCommand).de(de_DescribeImportCommand).build() {
       static {
@@ -26220,20 +26572,20 @@ var require_dist_cjs56 = __commonJS({
     var DescribeKinesisStreamingDestinationCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeKinesisStreamingDestination", {}).n("DynamoDBClient", "DescribeKinesisStreamingDestinationCommand").f(void 0, void 0).ser(se_DescribeKinesisStreamingDestinationCommand).de(de_DescribeKinesisStreamingDestinationCommand).build() {
       static {
         __name(this, "DescribeKinesisStreamingDestinationCommand");
       }
     };
-    var DescribeLimitsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var DescribeLimitsCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeLimits", {}).n("DynamoDBClient", "DescribeLimitsCommand").f(void 0, void 0).ser(se_DescribeLimitsCommand).de(de_DescribeLimitsCommand).build() {
       static {
@@ -26243,10 +26595,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeTable", {}).n("DynamoDBClient", "DescribeTableCommand").f(void 0, void 0).ser(se_DescribeTableCommand).de(de_DescribeTableCommand).build() {
       static {
@@ -26256,10 +26608,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeTableReplicaAutoScalingCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeTableReplicaAutoScaling", {}).n("DynamoDBClient", "DescribeTableReplicaAutoScalingCommand").f(void 0, void 0).ser(se_DescribeTableReplicaAutoScalingCommand).de(de_DescribeTableReplicaAutoScalingCommand).build() {
       static {
@@ -26269,10 +26621,10 @@ var require_dist_cjs56 = __commonJS({
     var DescribeTimeToLiveCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DescribeTimeToLive", {}).n("DynamoDBClient", "DescribeTimeToLiveCommand").f(void 0, void 0).ser(se_DescribeTimeToLiveCommand).de(de_DescribeTimeToLiveCommand).build() {
       static {
@@ -26282,10 +26634,10 @@ var require_dist_cjs56 = __commonJS({
     var DisableKinesisStreamingDestinationCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "DisableKinesisStreamingDestination", {}).n("DynamoDBClient", "DisableKinesisStreamingDestinationCommand").f(void 0, void 0).ser(se_DisableKinesisStreamingDestinationCommand).de(de_DisableKinesisStreamingDestinationCommand).build() {
       static {
@@ -26295,30 +26647,30 @@ var require_dist_cjs56 = __commonJS({
     var EnableKinesisStreamingDestinationCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "EnableKinesisStreamingDestination", {}).n("DynamoDBClient", "EnableKinesisStreamingDestinationCommand").f(void 0, void 0).ser(se_EnableKinesisStreamingDestinationCommand).de(de_EnableKinesisStreamingDestinationCommand).build() {
       static {
         __name(this, "EnableKinesisStreamingDestinationCommand");
       }
     };
-    var ExecuteStatementCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ExecuteStatementCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ExecuteStatement", {}).n("DynamoDBClient", "ExecuteStatementCommand").f(void 0, void 0).ser(se_ExecuteStatementCommand).de(de_ExecuteStatementCommand).build() {
       static {
         __name(this, "ExecuteStatementCommand");
       }
     };
-    var ExecuteTransactionCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ExecuteTransactionCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ExecuteTransaction", {}).n("DynamoDBClient", "ExecuteTransactionCommand").f(void 0, void 0).ser(se_ExecuteTransactionCommand).de(de_ExecuteTransactionCommand).build() {
       static {
@@ -26328,10 +26680,10 @@ var require_dist_cjs56 = __commonJS({
     var ExportTableToPointInTimeCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ExportTableToPointInTime", {}).n("DynamoDBClient", "ExportTableToPointInTimeCommand").f(void 0, void 0).ser(se_ExportTableToPointInTimeCommand).de(de_ExportTableToPointInTimeCommand).build() {
       static {
@@ -26341,10 +26693,10 @@ var require_dist_cjs56 = __commonJS({
     var GetItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "GetItem", {}).n("DynamoDBClient", "GetItemCommand").f(void 0, void 0).ser(se_GetItemCommand).de(de_GetItemCommand).build() {
       static {
@@ -26354,10 +26706,10 @@ var require_dist_cjs56 = __commonJS({
     var GetResourcePolicyCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "GetResourcePolicy", {}).n("DynamoDBClient", "GetResourcePolicyCommand").f(void 0, void 0).ser(se_GetResourcePolicyCommand).de(de_GetResourcePolicyCommand).build() {
       static {
@@ -26367,10 +26719,10 @@ var require_dist_cjs56 = __commonJS({
     var ImportTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "operationContextParams", get: /* @__PURE__ */ __name((input) => input?.TableCreationParameters?.TableName, "get") }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ImportTable", {}).n("DynamoDBClient", "ImportTableCommand").f(void 0, void 0).ser(se_ImportTableCommand).de(de_ImportTableCommand).build() {
       static {
@@ -26380,10 +26732,10 @@ var require_dist_cjs56 = __commonJS({
     var ListBackupsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListBackups", {}).n("DynamoDBClient", "ListBackupsCommand").f(void 0, void 0).ser(se_ListBackupsCommand).de(de_ListBackupsCommand).build() {
       static {
@@ -26393,10 +26745,10 @@ var require_dist_cjs56 = __commonJS({
     var ListContributorInsightsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListContributorInsights", {}).n("DynamoDBClient", "ListContributorInsightsCommand").f(void 0, void 0).ser(se_ListContributorInsightsCommand).de(de_ListContributorInsightsCommand).build() {
       static {
@@ -26406,20 +26758,20 @@ var require_dist_cjs56 = __commonJS({
     var ListExportsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListExports", {}).n("DynamoDBClient", "ListExportsCommand").f(void 0, void 0).ser(se_ListExportsCommand).de(de_ListExportsCommand).build() {
       static {
         __name(this, "ListExportsCommand");
       }
     };
-    var ListGlobalTablesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ListGlobalTablesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListGlobalTables", {}).n("DynamoDBClient", "ListGlobalTablesCommand").f(void 0, void 0).ser(se_ListGlobalTablesCommand).de(de_ListGlobalTablesCommand).build() {
       static {
@@ -26429,20 +26781,20 @@ var require_dist_cjs56 = __commonJS({
     var ListImportsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListImports", {}).n("DynamoDBClient", "ListImportsCommand").f(void 0, void 0).ser(se_ListImportsCommand).de(de_ListImportsCommand).build() {
       static {
         __name(this, "ListImportsCommand");
       }
     };
-    var ListTablesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config2, o3) {
+    var ListTablesCommand = class extends import_smithy_client28.Command.classBuilder().ep(commonParams3).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListTables", {}).n("DynamoDBClient", "ListTablesCommand").f(void 0, void 0).ser(se_ListTablesCommand).de(de_ListTablesCommand).build() {
       static {
@@ -26452,10 +26804,10 @@ var require_dist_cjs56 = __commonJS({
     var ListTagsOfResourceCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "ListTagsOfResource", {}).n("DynamoDBClient", "ListTagsOfResourceCommand").f(void 0, void 0).ser(se_ListTagsOfResourceCommand).de(de_ListTagsOfResourceCommand).build() {
       static {
@@ -26465,10 +26817,10 @@ var require_dist_cjs56 = __commonJS({
     var PutItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "PutItem", {}).n("DynamoDBClient", "PutItemCommand").f(void 0, void 0).ser(se_PutItemCommand).de(de_PutItemCommand).build() {
       static {
@@ -26478,10 +26830,10 @@ var require_dist_cjs56 = __commonJS({
     var PutResourcePolicyCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "PutResourcePolicy", {}).n("DynamoDBClient", "PutResourcePolicyCommand").f(void 0, void 0).ser(se_PutResourcePolicyCommand).de(de_PutResourcePolicyCommand).build() {
       static {
@@ -26491,10 +26843,10 @@ var require_dist_cjs56 = __commonJS({
     var QueryCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "Query", {}).n("DynamoDBClient", "QueryCommand").f(void 0, void 0).ser(se_QueryCommand).de(de_QueryCommand).build() {
       static {
@@ -26504,10 +26856,10 @@ var require_dist_cjs56 = __commonJS({
     var RestoreTableFromBackupCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TargetTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "RestoreTableFromBackup", {}).n("DynamoDBClient", "RestoreTableFromBackupCommand").f(void 0, void 0).ser(se_RestoreTableFromBackupCommand).de(de_RestoreTableFromBackupCommand).build() {
       static {
@@ -26517,10 +26869,10 @@ var require_dist_cjs56 = __commonJS({
     var RestoreTableToPointInTimeCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TargetTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "RestoreTableToPointInTime", {}).n("DynamoDBClient", "RestoreTableToPointInTimeCommand").f(void 0, void 0).ser(se_RestoreTableToPointInTimeCommand).de(de_RestoreTableToPointInTimeCommand).build() {
       static {
@@ -26530,10 +26882,10 @@ var require_dist_cjs56 = __commonJS({
     var ScanCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "Scan", {}).n("DynamoDBClient", "ScanCommand").f(void 0, void 0).ser(se_ScanCommand).de(de_ScanCommand).build() {
       static {
@@ -26543,10 +26895,10 @@ var require_dist_cjs56 = __commonJS({
     var TagResourceCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "TagResource", {}).n("DynamoDBClient", "TagResourceCommand").f(void 0, void 0).ser(se_TagResourceCommand).de(de_TagResourceCommand).build() {
       static {
@@ -26559,10 +26911,10 @@ var require_dist_cjs56 = __commonJS({
         type: "operationContextParams",
         get: /* @__PURE__ */ __name((input) => input?.TransactItems?.map((obj) => obj?.Get?.TableName), "get")
       }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "TransactGetItems", {}).n("DynamoDBClient", "TransactGetItemsCommand").f(void 0, void 0).ser(se_TransactGetItemsCommand).de(de_TransactGetItemsCommand).build() {
       static {
@@ -26579,10 +26931,10 @@ var require_dist_cjs56 = __commonJS({
           )
         ).flat(), "get")
       }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "TransactWriteItems", {}).n("DynamoDBClient", "TransactWriteItemsCommand").f(void 0, void 0).ser(se_TransactWriteItemsCommand).de(de_TransactWriteItemsCommand).build() {
       static {
@@ -26592,10 +26944,10 @@ var require_dist_cjs56 = __commonJS({
     var UntagResourceCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "ResourceArn" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UntagResource", {}).n("DynamoDBClient", "UntagResourceCommand").f(void 0, void 0).ser(se_UntagResourceCommand).de(de_UntagResourceCommand).build() {
       static {
@@ -26605,10 +26957,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateContinuousBackupsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateContinuousBackups", {}).n("DynamoDBClient", "UpdateContinuousBackupsCommand").f(void 0, void 0).ser(se_UpdateContinuousBackupsCommand).de(de_UpdateContinuousBackupsCommand).build() {
       static {
@@ -26618,10 +26970,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateContributorInsightsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateContributorInsights", {}).n("DynamoDBClient", "UpdateContributorInsightsCommand").f(void 0, void 0).ser(se_UpdateContributorInsightsCommand).de(de_UpdateContributorInsightsCommand).build() {
       static {
@@ -26631,10 +26983,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateGlobalTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "GlobalTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateGlobalTable", {}).n("DynamoDBClient", "UpdateGlobalTableCommand").f(void 0, void 0).ser(se_UpdateGlobalTableCommand).de(de_UpdateGlobalTableCommand).build() {
       static {
@@ -26644,10 +26996,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateGlobalTableSettingsCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "GlobalTableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateGlobalTableSettings", {}).n("DynamoDBClient", "UpdateGlobalTableSettingsCommand").f(void 0, void 0).ser(se_UpdateGlobalTableSettingsCommand).de(de_UpdateGlobalTableSettingsCommand).build() {
       static {
@@ -26657,10 +27009,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateItemCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateItem", {}).n("DynamoDBClient", "UpdateItemCommand").f(void 0, void 0).ser(se_UpdateItemCommand).de(de_UpdateItemCommand).build() {
       static {
@@ -26670,10 +27022,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateKinesisStreamingDestinationCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateKinesisStreamingDestination", {}).n("DynamoDBClient", "UpdateKinesisStreamingDestinationCommand").f(void 0, void 0).ser(se_UpdateKinesisStreamingDestinationCommand).de(de_UpdateKinesisStreamingDestinationCommand).build() {
       static {
@@ -26683,10 +27035,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateTableCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateTable", {}).n("DynamoDBClient", "UpdateTableCommand").f(void 0, void 0).ser(se_UpdateTableCommand).de(de_UpdateTableCommand).build() {
       static {
@@ -26696,10 +27048,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateTableReplicaAutoScalingCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateTableReplicaAutoScaling", {}).n("DynamoDBClient", "UpdateTableReplicaAutoScalingCommand").f(void 0, void 0).ser(se_UpdateTableReplicaAutoScalingCommand).de(de_UpdateTableReplicaAutoScalingCommand).build() {
       static {
@@ -26709,10 +27061,10 @@ var require_dist_cjs56 = __commonJS({
     var UpdateTimeToLiveCommand = class extends import_smithy_client28.Command.classBuilder().ep({
       ...commonParams3,
       ResourceArn: { type: "contextParams", name: "TableName" }
-    }).m(function(Command, cs, config2, o3) {
+    }).m(function(Command, cs, config, o3) {
       return [
-        (0, import_middleware_serde5.getSerdePlugin)(config2, this.serialize, this.deserialize),
-        (0, import_middleware_endpoint6.getEndpointPlugin)(config2, Command.getEndpointParameterInstructions())
+        (0, import_middleware_serde5.getSerdePlugin)(config, this.serialize, this.deserialize),
+        (0, import_middleware_endpoint6.getEndpointPlugin)(config, Command.getEndpointParameterInstructions())
       ];
     }).s("DynamoDB_20120810", "UpdateTimeToLive", {}).n("DynamoDBClient", "UpdateTimeToLiveCommand").f(void 0, void 0).ser(se_UpdateTimeToLiveCommand).de(de_UpdateTimeToLiveCommand).build() {
       static {
@@ -28141,368 +28493,6 @@ var require_dist_cjs58 = __commonJS({
   }
 });
 
-// node_modules/dotenv/package.json
-var require_package3 = __commonJS({
-  "node_modules/dotenv/package.json"(exports2, module2) {
-    module2.exports = {
-      name: "dotenv",
-      version: "17.0.1",
-      description: "Loads environment variables from .env file",
-      main: "lib/main.js",
-      types: "lib/main.d.ts",
-      exports: {
-        ".": {
-          types: "./lib/main.d.ts",
-          require: "./lib/main.js",
-          default: "./lib/main.js"
-        },
-        "./config": "./config.js",
-        "./config.js": "./config.js",
-        "./lib/env-options": "./lib/env-options.js",
-        "./lib/env-options.js": "./lib/env-options.js",
-        "./lib/cli-options": "./lib/cli-options.js",
-        "./lib/cli-options.js": "./lib/cli-options.js",
-        "./package.json": "./package.json"
-      },
-      scripts: {
-        "dts-check": "tsc --project tests/types/tsconfig.json",
-        lint: "standard",
-        pretest: "npm run lint && npm run dts-check",
-        test: "tap run --allow-empty-coverage --disable-coverage --timeout=60000",
-        "test:coverage": "tap run --show-full-coverage --timeout=60000 --coverage-report=text --coverage-report=lcov",
-        prerelease: "npm test",
-        release: "standard-version"
-      },
-      repository: {
-        type: "git",
-        url: "git://github.com/motdotla/dotenv.git"
-      },
-      homepage: "https://github.com/motdotla/dotenv#readme",
-      funding: "https://dotenvx.com",
-      keywords: [
-        "dotenv",
-        "env",
-        ".env",
-        "environment",
-        "variables",
-        "config",
-        "settings"
-      ],
-      readmeFilename: "README.md",
-      license: "BSD-2-Clause",
-      devDependencies: {
-        "@types/node": "^18.11.3",
-        decache: "^4.6.2",
-        sinon: "^14.0.1",
-        standard: "^17.0.0",
-        "standard-version": "^9.5.0",
-        tap: "^19.2.0",
-        typescript: "^4.8.4"
-      },
-      engines: {
-        node: ">=12"
-      },
-      browser: {
-        fs: false
-      }
-    };
-  }
-});
-
-// node_modules/dotenv/lib/main.js
-var require_main = __commonJS({
-  "node_modules/dotenv/lib/main.js"(exports2, module2) {
-    var fs = require("fs");
-    var path = require("path");
-    var os = require("os");
-    var crypto5 = require("crypto");
-    var packageJson = require_package3();
-    var version2 = packageJson.version;
-    var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
-    function parse2(src) {
-      const obj = {};
-      let lines = src.toString();
-      lines = lines.replace(/\r\n?/mg, "\n");
-      let match;
-      while ((match = LINE.exec(lines)) != null) {
-        const key = match[1];
-        let value = match[2] || "";
-        value = value.trim();
-        const maybeQuote = value[0];
-        value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
-        if (maybeQuote === '"') {
-          value = value.replace(/\\n/g, "\n");
-          value = value.replace(/\\r/g, "\r");
-        }
-        obj[key] = value;
-      }
-      return obj;
-    }
-    function _parseVault(options) {
-      options = options || {};
-      const vaultPath = _vaultPath(options);
-      options.path = vaultPath;
-      const result = DotenvModule.configDotenv(options);
-      if (!result.parsed) {
-        const err2 = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
-        err2.code = "MISSING_DATA";
-        throw err2;
-      }
-      const keys = _dotenvKey(options).split(",");
-      const length = keys.length;
-      let decrypted;
-      for (let i3 = 0; i3 < length; i3++) {
-        try {
-          const key = keys[i3].trim();
-          const attrs = _instructions(result, key);
-          decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
-          break;
-        } catch (error) {
-          if (i3 + 1 >= length) {
-            throw error;
-          }
-        }
-      }
-      return DotenvModule.parse(decrypted);
-    }
-    function _warn(message) {
-      console.error(`[dotenv@${version2}][WARN] ${message}`);
-    }
-    function _debug(message) {
-      console.log(`[dotenv@${version2}][DEBUG] ${message}`);
-    }
-    function _log(message) {
-      console.log(`[dotenv@${version2}] ${message}`);
-    }
-    function _dotenvKey(options) {
-      if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-        return options.DOTENV_KEY;
-      }
-      if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
-        return process.env.DOTENV_KEY;
-      }
-      return "";
-    }
-    function _instructions(result, dotenvKey) {
-      let uri;
-      try {
-        uri = new URL(dotenvKey);
-      } catch (error) {
-        if (error.code === "ERR_INVALID_URL") {
-          const err2 = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
-          err2.code = "INVALID_DOTENV_KEY";
-          throw err2;
-        }
-        throw error;
-      }
-      const key = uri.password;
-      if (!key) {
-        const err2 = new Error("INVALID_DOTENV_KEY: Missing key part");
-        err2.code = "INVALID_DOTENV_KEY";
-        throw err2;
-      }
-      const environment = uri.searchParams.get("environment");
-      if (!environment) {
-        const err2 = new Error("INVALID_DOTENV_KEY: Missing environment part");
-        err2.code = "INVALID_DOTENV_KEY";
-        throw err2;
-      }
-      const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-      const ciphertext = result.parsed[environmentKey];
-      if (!ciphertext) {
-        const err2 = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
-        err2.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
-        throw err2;
-      }
-      return { ciphertext, key };
-    }
-    function _vaultPath(options) {
-      let possibleVaultPath = null;
-      if (options && options.path && options.path.length > 0) {
-        if (Array.isArray(options.path)) {
-          for (const filepath of options.path) {
-            if (fs.existsSync(filepath)) {
-              possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
-            }
-          }
-        } else {
-          possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
-        }
-      } else {
-        possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
-      }
-      if (fs.existsSync(possibleVaultPath)) {
-        return possibleVaultPath;
-      }
-      return null;
-    }
-    function _resolveHome(envPath) {
-      return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
-    }
-    function _configVault(options) {
-      const debug = Boolean(options && options.debug);
-      const quiet = Boolean(options && options.quiet);
-      if (debug || !quiet) {
-        _log("Loading env from encrypted .env.vault");
-      }
-      const parsed = DotenvModule._parseVault(options);
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      DotenvModule.populate(processEnv, parsed, options);
-      return { parsed };
-    }
-    function configDotenv(options) {
-      const dotenvPath = path.resolve(process.cwd(), ".env");
-      let encoding = "utf8";
-      const debug = Boolean(options && options.debug);
-      const quiet = Boolean(options && options.quiet);
-      if (options && options.encoding) {
-        encoding = options.encoding;
-      } else {
-        if (debug) {
-          _debug("No encoding is specified. UTF-8 is used by default");
-        }
-      }
-      let optionPaths = [dotenvPath];
-      if (options && options.path) {
-        if (!Array.isArray(options.path)) {
-          optionPaths = [_resolveHome(options.path)];
-        } else {
-          optionPaths = [];
-          for (const filepath of options.path) {
-            optionPaths.push(_resolveHome(filepath));
-          }
-        }
-      }
-      let lastError;
-      const parsedAll = {};
-      for (const path2 of optionPaths) {
-        try {
-          const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
-          DotenvModule.populate(parsedAll, parsed, options);
-        } catch (e3) {
-          if (debug) {
-            _debug(`Failed to load ${path2} ${e3.message}`);
-          }
-          lastError = e3;
-        }
-      }
-      let processEnv = process.env;
-      if (options && options.processEnv != null) {
-        processEnv = options.processEnv;
-      }
-      const populated = DotenvModule.populate(processEnv, parsedAll, options);
-      if (debug || !quiet) {
-        const keysCount = Object.keys(populated).length;
-        const shortPaths = [];
-        for (const filePath of optionPaths) {
-          try {
-            const relative = path.relative(process.cwd(), filePath);
-            shortPaths.push(relative);
-          } catch (e3) {
-            if (debug) {
-              _debug(`Failed to load ${filePath} ${e3.message}`);
-            }
-            lastError = e3;
-          }
-        }
-        _log(`injecting env (${keysCount}) from ${shortPaths.join(",")} \u2013 [tip] encrypt with dotenvx: https://dotenvx.com`);
-      }
-      if (lastError) {
-        return { parsed: parsedAll, error: lastError };
-      } else {
-        return { parsed: parsedAll };
-      }
-    }
-    function config2(options) {
-      if (_dotenvKey(options).length === 0) {
-        return DotenvModule.configDotenv(options);
-      }
-      const vaultPath = _vaultPath(options);
-      if (!vaultPath) {
-        _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
-        return DotenvModule.configDotenv(options);
-      }
-      return DotenvModule._configVault(options);
-    }
-    function decrypt(encrypted, keyStr) {
-      const key = Buffer.from(keyStr.slice(-64), "hex");
-      let ciphertext = Buffer.from(encrypted, "base64");
-      const nonce = ciphertext.subarray(0, 12);
-      const authTag = ciphertext.subarray(-16);
-      ciphertext = ciphertext.subarray(12, -16);
-      try {
-        const aesgcm = crypto5.createDecipheriv("aes-256-gcm", key, nonce);
-        aesgcm.setAuthTag(authTag);
-        return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-      } catch (error) {
-        const isRange = error instanceof RangeError;
-        const invalidKeyLength = error.message === "Invalid key length";
-        const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
-        if (isRange || invalidKeyLength) {
-          const err2 = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
-          err2.code = "INVALID_DOTENV_KEY";
-          throw err2;
-        } else if (decryptionFailed) {
-          const err2 = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
-          err2.code = "DECRYPTION_FAILED";
-          throw err2;
-        } else {
-          throw error;
-        }
-      }
-    }
-    function populate(processEnv, parsed, options = {}) {
-      const debug = Boolean(options && options.debug);
-      const override = Boolean(options && options.override);
-      const populated = {};
-      if (typeof parsed !== "object") {
-        const err2 = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
-        err2.code = "OBJECT_REQUIRED";
-        throw err2;
-      }
-      for (const key of Object.keys(parsed)) {
-        if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
-          if (override === true) {
-            processEnv[key] = parsed[key];
-            populated[key] = parsed[key];
-          }
-          if (debug) {
-            if (override === true) {
-              _debug(`"${key}" is already defined and WAS overwritten`);
-            } else {
-              _debug(`"${key}" is already defined and was NOT overwritten`);
-            }
-          }
-        } else {
-          processEnv[key] = parsed[key];
-          populated[key] = parsed[key];
-        }
-      }
-      return populated;
-    }
-    var DotenvModule = {
-      configDotenv,
-      _configVault,
-      _parseVault,
-      config: config2,
-      decrypt,
-      parse: parse2,
-      populate
-    };
-    module2.exports.configDotenv = DotenvModule.configDotenv;
-    module2.exports._configVault = DotenvModule._configVault;
-    module2.exports._parseVault = DotenvModule._parseVault;
-    module2.exports.config = DotenvModule.config;
-    module2.exports.decrypt = DotenvModule.decrypt;
-    module2.exports.parse = DotenvModule.parse;
-    module2.exports.populate = DotenvModule.populate;
-    module2.exports = DotenvModule;
-  }
-});
-
 // lambdas/createPatient/index.ts
 var index_exports = {};
 __export(index_exports, {
@@ -28615,11 +28605,60 @@ var MedicalScenarios = {
 // shared/utils.ts
 var import_lib_dynamodb2 = __toESM(require_dist_cjs58(), 1);
 
+// node_modules/uuid/dist/esm/stringify.js
+var byteToHex3 = [];
+for (let i3 = 0; i3 < 256; ++i3) {
+  byteToHex3.push((i3 + 256).toString(16).slice(1));
+}
+function unsafeStringify3(arr, offset = 0) {
+  return (byteToHex3[arr[offset + 0]] + byteToHex3[arr[offset + 1]] + byteToHex3[arr[offset + 2]] + byteToHex3[arr[offset + 3]] + "-" + byteToHex3[arr[offset + 4]] + byteToHex3[arr[offset + 5]] + "-" + byteToHex3[arr[offset + 6]] + byteToHex3[arr[offset + 7]] + "-" + byteToHex3[arr[offset + 8]] + byteToHex3[arr[offset + 9]] + "-" + byteToHex3[arr[offset + 10]] + byteToHex3[arr[offset + 11]] + byteToHex3[arr[offset + 12]] + byteToHex3[arr[offset + 13]] + byteToHex3[arr[offset + 14]] + byteToHex3[arr[offset + 15]]).toLowerCase();
+}
+
+// node_modules/uuid/dist/esm/rng.js
+var import_crypto9 = require("crypto");
+var rnds8Pool3 = new Uint8Array(256);
+var poolPtr3 = rnds8Pool3.length;
+function rng3() {
+  if (poolPtr3 > rnds8Pool3.length - 16) {
+    (0, import_crypto9.randomFillSync)(rnds8Pool3);
+    poolPtr3 = 0;
+  }
+  return rnds8Pool3.slice(poolPtr3, poolPtr3 += 16);
+}
+
+// node_modules/uuid/dist/esm/native.js
+var import_crypto10 = require("crypto");
+var native_default3 = { randomUUID: import_crypto10.randomUUID };
+
+// node_modules/uuid/dist/esm/v4.js
+function v43(options, buf, offset) {
+  if (native_default3.randomUUID && !buf && !options) {
+    return native_default3.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random ?? options.rng?.() ?? rng3();
+  if (rnds.length < 16) {
+    throw new Error("Random bytes length must be >= 16");
+  }
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    if (offset < 0 || offset + 16 > buf.length) {
+      throw new RangeError(`UUID byte range ${offset}:${offset + 15} is out of buffer bounds`);
+    }
+    for (let i3 = 0; i3 < 16; ++i3) {
+      buf[offset + i3] = rnds[i3];
+    }
+    return buf;
+  }
+  return unsafeStringify3(rnds);
+}
+var v4_default3 = v43;
+
 // shared/dynamoClient.ts
 var import_client_dynamodb = __toESM(require_dist_cjs56(), 1);
 var import_lib_dynamodb = __toESM(require_dist_cjs58(), 1);
-var dotenv = __toESM(require_main(), 1);
-dotenv.config();
 var client = new import_client_dynamodb.DynamoDBClient({
   region: "eu-central-1"
   // credentials: {
@@ -28630,9 +28669,8 @@ var client = new import_client_dynamodb.DynamoDBClient({
 var ddbDocClient = import_lib_dynamodb.DynamoDBDocumentClient.from(client);
 
 // shared/utils.ts
-var id = 0;
 function generatePatientId() {
-  return `P-${id++}`;
+  return `P-${v4_default3()}`;
 }
 function now() {
   return Date.now();
@@ -28664,10 +28702,6 @@ function injectRandomPatient() {
     PatientId: generatePatientId(),
     Priority: Math.ceil(Math.random() * 10),
     WaitingQueues: [...route],
-    CurrentTreatment: null,
-    WaitStartTimes: {},
-    TreatmentStartTime: null,
-    TreatmentDuration: null,
     Name: `person ${Math.floor(Math.random() * 1e3)}`,
     Phone: `050-${Math.floor(Math.random() * 1e7).toString().padStart(7, "0")}`
   };
@@ -28684,8 +28718,8 @@ async function insertPatient(patient) {
       Item: patient
     }
   });
-  for (const queue of patient.WaitingQueues[0]) {
-    transactItems.push(createQueueInsertItem(queue, patient.PatientId, patient.Priority));
+  for (const q3 of patient.WaitingQueues[0]) {
+    transactItems.push(createQueueInsertItem(q3, patient.PatientId, patient.Priority));
   }
   await ddbDocClient.send(
     new import_lib_dynamodb3.TransactWriteCommand({

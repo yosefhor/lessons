@@ -1,14 +1,60 @@
 import { ddbDocClient } from "../../shared/dynamoClient";
-import { QueryCommand, TransactWriteCommand, } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, TransactWriteCommand, } from "@aws-sdk/lib-dynamodb";
 import { QueueName, QueueNamesList } from "../../shared/queues";
-import { formatPriorityAndTime, randomTreatmentDuration, now, getPatient, createQueueInsertItem } from "../../shared/utils";
+import { randomTreatmentDuration, now, getPatient, createQueueInsertItem, formatPriorityAndTime } from "../../shared/utils";
 
 // פונקציה שמריצה מעבר על כל התורים
 export async function processQueues() {
-
     for (const queueName of QueueNamesList) {
+        // שליפת הפציינט שנמצא כרגע בטיפול (אם קיים)
+        const { Item: activeItem = undefined } = await ddbDocClient.send(
+            new GetCommand({
+                TableName: "Queues",
+                Key: {
+                    QueueName: queueName,
+                    PriorityAndTime: "00#0000000000000",
+                },
+            })
+        );
 
-        // שליפת הממתינים לתור מהטבלה לפי הסדר (Limit של 10 מספיק כרגע)
+        if (activeItem) {
+            const activePatient = await getPatient(activeItem.PatientId);
+            if (
+                activePatient?.TreatmentEndTime &&
+                now() < activePatient.TreatmentEndTime
+            ) {
+                // עדיין בטיפול, לא מקדמים
+                continue;
+            } else {
+                // סיים טיפול – מחיקת רשומת התור
+                await ddbDocClient.send(
+                    new TransactWriteCommand({
+                        TransactItems: [
+                            {
+                                Delete: {
+                                    TableName: "Queues",
+                                    Key: {
+                                        QueueName: queueName,
+                                        PriorityAndTime: "00#0000000000000",
+                                    },
+                                },
+                            },
+                            {
+                                Update: {
+                                    TableName: "Patients",
+                                    Key: { PatientId: activePatient?.PatientId },
+                                    UpdateExpression: `
+                    REMOVE CurrentTreatment, TreatmentStartTime, TreatmentDuration, TreatmentEndTime
+                  `,
+                                },
+                            },
+                        ],
+                    })
+                );
+            }
+        }
+
+        // כעת נשלוף את 10 הממתינים בתור לפי סדר עדיפות
         const { Items: queueItems = [] } = await ddbDocClient.send(
             new QueryCommand({
                 TableName: "Queues",
@@ -16,76 +62,58 @@ export async function processQueues() {
                 ExpressionAttributeValues: {
                     ":queueName": queueName,
                 },
-                ScanIndexForward: true, // ממי שצריך להיכנס ראשון
+                ScanIndexForward: true,
                 Limit: 10,
             })
         );
 
         if (queueItems.length === 0) continue;
 
-        // בדיקה אם מישהו כבר בטיפול בתור הזה
-        let someoneInTreatment = false;
+        // מישהו זמין – בודקים מי הממתין הראשון שאינו באמצע טיפול אחר
         for (const item of queueItems) {
             const patient = await getPatient(item.PatientId);
+            if (!patient) continue;
+
             if (
-                patient &&
-                patient.CurrentTreatment === queueName &&
-                patient.TreatmentStartTime &&
-                patient.TreatmentDuration &&
-                now() < patient.TreatmentStartTime + patient.TreatmentDuration
+                patient.TreatmentEndTime &&
+                now() < patient.TreatmentEndTime
             ) {
-                someoneInTreatment = true;
-                break;
+                // באמצע טיפול אחר, מדלגים
+                continue;
             }
-        }
-
-        if (someoneInTreatment) continue;
-
-        // מישהו זמין – נמצא את הראשון שזמין
-        for (const item of queueItems) {
-            const patient = await getPatient(item.PatientId);
-            if (
-                !patient ||
-                patient.TreatmentStartTime &&
-                patient.TreatmentDuration &&
-                patient.TreatmentStartTime + patient.TreatmentDuration < now()
-            ) continue;
-
-            const currentStep = patient.WaitingQueues[0];
-            const updatedStep = currentStep.filter(q => q !== queueName);
 
             const newWaitingQueues = [...patient.WaitingQueues];
-            let newStepQueues: QueueName[] = [];
+            newWaitingQueues[0] = newWaitingQueues[0].filter((q) => q !== queueName);
 
-            if (updatedStep.length === 0) {
-                // סיימנו את השלב הנוכחי, מסירים אותו
+            const nextStep: QueueName[] = [];
+
+            if (newWaitingQueues[0].length === 0) {
                 newWaitingQueues.shift();
-
-                // אם יש שלב הבא – נוסיף את התורים שבו ל־Queues
-                if (newWaitingQueues.length > 0) {
-                    newStepQueues = newWaitingQueues[0]; // אלו התורים החדשים שצריך להכניס ל־Queues
-                }
-            } else {
-                newWaitingQueues[0] = updatedStep; // רק מסירים את התור שבוצע מהשלב הנוכחי
+                nextStep.push(...newWaitingQueues[0]);
             }
 
+            const treatmentStartTime = now();
             const treatmentDuration = randomTreatmentDuration();
+            const treatmentEndTime = treatmentStartTime + treatmentDuration;
+
             const transactItems: any[] = [
                 {
                     Update: {
                         TableName: "Patients",
                         Key: { PatientId: patient.PatientId },
                         UpdateExpression: `
-        SET TreatmentStartTime = :start,
-            TreatmentDuration = :duration,
-            CurrentTreatment = :queue,
-            WaitingQueues = :newWaitingQueues
-      `,
+              SET TreatmentStartTime = :start,
+              TreatmentDuration = :duration,
+              TreatmentEndTime = :end,
+                  CurrentTreatment = :queue,
+                  WaitingQueues = :queues
+            `,
                         ExpressionAttributeValues: {
-                            ":start": now(),
+                            ":start": treatmentStartTime,
                             ":duration": treatmentDuration,
+                            ":end": treatmentEndTime,
                             ":queue": queueName,
-                            ":newWaitingQueues": newWaitingQueues,
+                            ":queues": newWaitingQueues,
                         },
                     },
                 },
@@ -98,18 +126,29 @@ export async function processQueues() {
                         },
                     },
                 },
+                {
+                    Put: {
+                        TableName: "Queues",
+                        Item: {
+                            QueueName: queueName,
+                            PriorityAndTime: "00#0000000000000",
+                            PatientId: patient.PatientId,
+                        },
+                    },
+                }
             ];
 
-            for (const q of newStepQueues) {
-                const priorityKey = formatPriorityAndTime(patient.Priority, now());
-                transactItems.push(createQueueInsertItem(q, patient.PatientId, patient.Priority));
+            for (const q of nextStep) {
+                transactItems.push(
+                    createQueueInsertItem(q, patient.PatientId, patient.Priority)
+                );
             }
 
-            await ddbDocClient.send(new TransactWriteCommand({
-                TransactItems: transactItems,
-            }));
+            await ddbDocClient.send(
+                new TransactWriteCommand({ TransactItems: transactItems })
+            );
 
-            break; // קידמנו מישהו → יוצאים מהלולאה
+            break;
         }
     }
 }

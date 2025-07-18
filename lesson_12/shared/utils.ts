@@ -1,12 +1,11 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { v4 as uuidv4 } from "uuid";
 import { Patient } from "./types";
 import { ddbDocClient } from "./dynamoClient";
 import { QueueName } from "./queues";
 
-//For simulating only!!!
-let id = 0;
 export function generatePatientId(): string {
-  return `P-${id++}`;
+  return `P-${uuidv4()}`;
 }
 
 // פונקציה שמחזירה משך טיפול רנדומלי בין 2 ל־5 דקות

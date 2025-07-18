@@ -15,8 +15,8 @@ export async function insertPatient(patient: Patient): Promise<void> {
   });
 
   // הכנסת התורים בשלב הראשון (WaitingQueues)
-  for (const queue of patient.WaitingQueues[0]) {
-    transactItems.push(createQueueInsertItem(queue, patient.PatientId, patient.Priority));
+  for (const q of patient.WaitingQueues[0]) {
+    transactItems.push(createQueueInsertItem(q, patient.PatientId, patient.Priority));
   }
 
   await ddbDocClient.send(
